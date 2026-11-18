@@ -50,7 +50,7 @@ export const menu: SeccionMenu[] = [
   {
     titulo: "Café",
     platillos: [
-      { nombre: "Americano", detalle: "Pluma Hidalgo, Oaxaca", precio: 45 },
+      { nombre: "Americano", detalle: "Pluma Hidalgo, Oaxaca", precio: 48 },
       { nombre: "Espresso", detalle: "Doble, mezcla de la casa", precio: 40 },
       { nombre: "Cortado", detalle: "Mitad espresso, mitad leche", precio: 50 },
       { nombre: "Capuchino", detalle: "Coatepec, Veracruz", precio: 58 },
