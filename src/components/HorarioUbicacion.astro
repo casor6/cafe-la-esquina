@@ -1,0 +1,307 @@
+---
+import { Clock, MapPin, Navigation, Phone } from "@lucide/astro";
+import MapaEsquina from "./ilustraciones/MapaEsquina.astro";
+import { horario, negocio } from "../data/negocio";
+
+const turnosPorDia = Array.from({ length: 7 }, (_, dia) => {
+  const fila = horario.find((f) => f.indices.includes(dia));
+  return fila ? fila.turno : null;
+});
+---
+
+<section class="seccion" aria-label="Horario y ubicación">
+  <div class="contenedor rejilla">
+    <div id="horario" class="horario">
+      <p class="etiqueta"><Clock size={16} aria-hidden="true" /> Horario</p>
+      <h2>Abrimos temprano, todos los días</h2>
+      <p
+        class="estado"
+        data-estado
+        data-turnos={JSON.stringify(turnosPorDia)}
+        data-zona={negocio.zonaHoraria}
+        hidden
+      >
+        <span class="punto" aria-hidden="true"></span>
+        <span data-estado-texto></span>
+      </p>
+      <dl class="tabla">
+        {
+          horario.map((fila) => (
+            <div class="fila" data-indices={fila.indices.join(",")}>
+              <dt>{fila.dias}</dt>
+              <dd>
+                {fila.turno.abre} – {fila.turno.cierra}
+              </dd>
+            </div>
+          ))
+        }
+      </dl>
+      <p class="aclaracion">Días festivos abrimos en horario de domingo.</p>
+    </div>
+
+    <div id="ubicacion" class="ubicacion">
+      <p class="etiqueta"><MapPin size={16} aria-hidden="true" /> Dónde estamos</p>
+      <address>
+        <span class="calle">{negocio.direccion.calle}</span>
+        <span>{negocio.direccion.colonia}, {negocio.direccion.cp}</span>
+        <span>{negocio.direccion.ciudad}</span>
+      </address>
+      <p class="referencia">{negocio.direccion.referencia}</p>
+      <div class="mapa-marco">
+        <MapaEsquina />
+      </div>
+      <div class="acciones">
+        <a class="boton-mapa" href={negocio.direccion.mapa} target="_blank" rel="noopener noreferrer">
+          <Navigation size={18} aria-hidden="true" />
+          Cómo llegar
+        </a>
+        <a class="telefono" href={`tel:${negocio.telefonoTel}`}>
+          <Phone size={18} aria-hidden="true" />
+          {negocio.telefonoVisible}
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  type Turno = { abre: string; cierra: string } | null;
+
+  const aMinutos = (hora: string) => {
+    const [h, m] = hora.split(":").map(Number);
+    return h * 60 + m;
+  };
+
+  const indiceDia: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+
+  const elemento = document.querySelector<HTMLElement>("[data-estado]");
+
+  if (elemento) {
+    const turnos: Turno[] = JSON.parse(elemento.dataset.turnos ?? "[]");
+    const zona = elemento.dataset.zona ?? "America/Mexico_City";
+    const texto = elemento.querySelector<HTMLElement>("[data-estado-texto]");
+
+    const actualizar = () => {
+      const partes = new Intl.DateTimeFormat("en-US", {
+        timeZone: zona,
+        weekday: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }).formatToParts(new Date());
+
+      const valor = (tipo: string) => partes.find((p) => p.type === tipo)?.value ?? "";
+      const dia = indiceDia[valor("weekday")];
+      const ahora = Number(valor("hour")) * 60 + Number(valor("minute"));
+      const turno = turnos[dia];
+
+      document.querySelectorAll<HTMLElement>(".fila[data-indices]").forEach((fila) => {
+        const indices = (fila.dataset.indices ?? "").split(",").map(Number);
+        fila.classList.toggle("hoy", indices.includes(dia));
+      });
+
+      let mensaje = "Hoy no abrimos";
+      let abierto = false;
+
+      if (turno) {
+        const abre = aMinutos(turno.abre);
+        const cierra = aMinutos(turno.cierra);
+        if (ahora >= abre && ahora < cierra) {
+          abierto = true;
+          mensaje = cierra - ahora <= 60 ? `Abierto, cerramos a las ${turno.cierra}` : `Abierto ahora, hasta las ${turno.cierra}`;
+        } else if (ahora < abre) {
+          mensaje = `Cerrado, abrimos hoy a las ${turno.abre}`;
+        } else {
+          const manana = turnos[(dia + 1) % 7];
+          mensaje = manana ? `Cerrado, abrimos mañana a las ${manana.abre}` : "Cerrado por hoy";
+        }
+      }
+
+      elemento.classList.toggle("abierto", abierto);
+      if (texto) texto.textContent = mensaje;
+      elemento.hidden = false;
+    };
+
+    actualizar();
+    setInterval(actualizar, 60_000);
+  }
+</script>
+
+<style>
+  .seccion {
+    background: var(--botella);
+    color: var(--papel);
+    padding-block: 5rem;
+  }
+
+  .rejilla {
+    display: grid;
+    gap: 4rem;
+  }
+
+  .etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--mostaza);
+    margin-bottom: 0.9rem;
+  }
+
+  h2 {
+    font-size: clamp(2rem, 4.5vw, 2.9rem);
+    letter-spacing: -0.015em;
+    max-width: 14ch;
+  }
+
+  .estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    background: rgb(0 0 0 / 0.22);
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+
+  .estado[hidden] {
+    display: none;
+  }
+
+  .punto {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: #e07a5a;
+  }
+
+  .estado.abierto .punto {
+    background: #8fd19e;
+    box-shadow: 0 0 0 4px rgb(143 209 158 / 0.25);
+  }
+
+  .tabla {
+    margin: 2rem 0 0;
+    border-top: 1px solid rgb(243 235 221 / 0.2);
+  }
+
+  .fila {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 0.25rem;
+    border-bottom: 1px solid rgb(243 235 221 / 0.2);
+  }
+
+  .fila dt {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+  }
+
+  .fila dd {
+    margin: 0;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.1rem;
+  }
+
+  .fila.hoy {
+    background: rgb(243 235 221 / 0.08);
+    box-shadow: inset 3px 0 0 var(--mostaza);
+    padding-left: 0.9rem;
+  }
+
+  .aclaracion {
+    margin-top: 1rem;
+    font-size: 0.9375rem;
+    color: rgb(243 235 221 / 0.75);
+  }
+
+  address {
+    display: grid;
+    font-style: normal;
+    font-size: 1.1rem;
+  }
+
+  .calle {
+    font-family: var(--serif);
+    font-size: clamp(1.75rem, 4vw, 2.4rem);
+    font-weight: 600;
+    line-height: 1.15;
+    margin-bottom: 0.4rem;
+  }
+
+  .referencia {
+    margin-top: 0.75rem;
+    color: rgb(243 235 221 / 0.75);
+  }
+
+  .mapa-marco {
+    margin-top: 1.75rem;
+    padding: 0.5rem;
+    background: var(--papel);
+    border-radius: calc(var(--radio) + 4px);
+    transform: rotate(-1deg);
+    box-shadow: 0 16px 30px -16px rgb(0 0 0 / 0.5);
+  }
+
+  .acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    align-items: center;
+    margin-top: 2rem;
+  }
+
+  .boton-mapa {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.85rem 1.3rem;
+    border-radius: var(--radio);
+    background: var(--mostaza);
+    color: var(--tostado);
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 3px 0 rgb(0 0 0 / 0.3);
+  }
+
+  .boton-mapa:hover {
+    background: #e6b85c;
+  }
+
+  .telefono {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .telefono:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  @media (min-width: 1024px) {
+    .rejilla {
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 6rem;
+      align-items: start;
+    }
+
+    .horario {
+      position: sticky;
+      top: 7rem;
+    }
+  }
+</style>

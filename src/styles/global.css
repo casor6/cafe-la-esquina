@@ -1,0 +1,93 @@
+:root {
+  --papel: #f3ebdd;
+  --papel-oscuro: #e8dcc6;
+  --tostado: #2a1c13;
+  --tostado-suave: #5a4636;
+  --terracota: #b9532c;
+  --terracota-oscura: #96401f;
+  --botella: #1e4a38;
+  --botella-claro: #2c624c;
+  --mostaza: #d9a441;
+  --serif: "Fraunces Variable", Georgia, serif;
+  --sans: "Instrument Sans", system-ui, sans-serif;
+  --ancho: 72rem;
+  --radio: 6px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tostado);
+  font-family: var(--sans);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--serif);
+  font-weight: 600;
+  line-height: 1.08;
+  margin: 0;
+  font-variation-settings: "SOFT" 50, "WONK" 1;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+img,
+svg {
+  display: block;
+}
+
+:focus-visible {
+  outline: 3px solid var(--mostaza);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.contenedor {
+  width: min(100% - 2.5rem, var(--ancho));
+  margin-inline: auto;
+}
+
+.etiqueta {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

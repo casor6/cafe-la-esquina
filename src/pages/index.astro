@@ -1,0 +1,23 @@
+---
+import Base from "../layouts/Base.astro";
+import Header from "../components/Header.astro";
+import Hero from "../components/Hero.astro";
+import Menu from "../components/Menu.astro";
+import HorarioUbicacion from "../components/HorarioUbicacion.astro";
+import Footer from "../components/Footer.astro";
+import BotonWhatsApp from "../components/BotonWhatsApp.astro";
+---
+
+<Base
+  titulo="Café La Esquina · Cafetería de barrio en la Roma, CDMX"
+  descripcion="Café de Oaxaca y Veracruz tostado en casa cada martes. Estamos en Colima esquina Córdoba, Roma Norte. Pide por WhatsApp."
+>
+  <Header />
+  <main>
+    <Hero />
+    <Menu />
+    <HorarioUbicacion />
+  </main>
+  <Footer />
+  <BotonWhatsApp variante="flotante" />
+</Base>

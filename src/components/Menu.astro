@@ -1,0 +1,197 @@
+---
+import BotonWhatsApp from "./BotonWhatsApp.astro";
+import Taza from "./ilustraciones/Taza.astro";
+import { menu, extraLeche } from "../data/negocio";
+
+const precio = (valor: number) => `$${valor}`;
+const [cafe, acompanar] = menu;
+---
+
+<section id="menu" class="menu" aria-labelledby="menu-titulo">
+  <div class="contenedor">
+    <header class="cabecera">
+      <p class="etiqueta">Lo que hay en la barra</p>
+      <h2 id="menu-titulo">El menú cabe en un pizarrón</h2>
+      <p class="intro">Pocas cosas, bien hechas. Precios en pesos mexicanos, IVA incluido.</p>
+    </header>
+
+    <div class="pizarron">
+      <div class="columna principal">
+        <h3>{cafe.titulo}</h3>
+        <ul>
+          {
+            cafe.platillos.map((p) => (
+              <li>
+                <div class="linea">
+                  <span class="nombre">{p.nombre}</span>
+                  <span class="puntos" aria-hidden="true" />
+                  <span class="precio">{precio(p.precio)}</span>
+                </div>
+                <span class="detalle">{p.detalle}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="nota">Leche de avena o almendra +{precio(extraLeche)}</p>
+      </div>
+
+      <div class="columna secundaria">
+        <h3>{acompanar.titulo}</h3>
+        <ul>
+          {
+            acompanar.platillos.map((p) => (
+              <li>
+                <div class="linea">
+                  <span class="nombre">{p.nombre}</span>
+                  <span class="puntos" aria-hidden="true" />
+                  <span class="precio">{precio(p.precio)}</span>
+                </div>
+                <span class="detalle">{p.detalle}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <div class="pedido">
+          <div class="dibujo">
+            <Taza />
+          </div>
+          <p>¿Vas con prisa? Mándanos tu pedido y lo tenemos listo cuando llegues.</p>
+          <BotonWhatsApp variante="claro" texto="Pedir esto por WhatsApp" />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .menu {
+    padding-block: 5rem;
+  }
+
+  .cabecera {
+    max-width: 38rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .cabecera .etiqueta {
+    color: var(--terracota);
+    margin-bottom: 0.75rem;
+  }
+
+  h2 {
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    letter-spacing: -0.015em;
+  }
+
+  .intro {
+    margin-top: 0.9rem;
+    color: var(--tostado-suave);
+  }
+
+  .pizarron {
+    display: grid;
+    background: var(--tostado);
+    color: var(--papel);
+    border-radius: var(--radio);
+    border: 10px solid #4a3324;
+    box-shadow: 0 18px 40px -18px rgb(42 28 19 / 0.6);
+  }
+
+  .columna {
+    padding: 2.25rem 1.5rem;
+  }
+
+  .secundaria {
+    border-top: 1px dashed rgb(243 235 221 / 0.25);
+  }
+
+  h3 {
+    font-size: 1.75rem;
+    font-style: italic;
+    font-weight: 500;
+    color: var(--mostaza);
+    margin-bottom: 1.25rem;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .linea {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .nombre {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-weight: 500;
+  }
+
+  .puntos {
+    flex: 1;
+    border-bottom: 2px dotted rgb(243 235 221 / 0.35);
+    transform: translateY(-0.3rem);
+  }
+
+  .precio {
+    font-weight: 600;
+    font-size: 1.15rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .detalle {
+    display: block;
+    font-size: 0.9375rem;
+    color: rgb(243 235 221 / 0.68);
+  }
+
+  .nota {
+    margin-top: 1.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgb(243 235 221 / 0.18);
+    font-size: 0.9375rem;
+    color: var(--mostaza);
+  }
+
+  .pedido {
+    margin-top: 2.25rem;
+    padding: 1.5rem;
+    background: var(--botella);
+    border-radius: var(--radio);
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+  }
+
+  .dibujo {
+    width: 3.5rem;
+    color: var(--mostaza);
+  }
+
+  @media (min-width: 720px) {
+    .columna {
+      padding: 2.75rem 2.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .pizarron {
+      grid-template-columns: 1.25fr 1fr;
+    }
+
+    .columna {
+      padding: 3rem 3.25rem;
+    }
+
+    .secundaria {
+      border-top: 0;
+      border-left: 1px dashed rgb(243 235 221 / 0.25);
+    }
+  }
+</style>

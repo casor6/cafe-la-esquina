@@ -1,0 +1,82 @@
+---
+import BotonWhatsApp from "./BotonWhatsApp.astro";
+import { negocio } from "../data/negocio";
+
+const anio = new Date().getFullYear();
+---
+
+<footer class="pie">
+  <div class="contenedor">
+    <div class="cierre">
+      <p class="frase">Te guardamos tu lugar en la barra.</p>
+      <BotonWhatsApp />
+    </div>
+    <div class="datos">
+      <p class="marca">{negocio.nombre}</p>
+      <p>{negocio.direccion.calle}, {negocio.direccion.colonia}</p>
+      <p>
+        <a href={`tel:${negocio.telefonoTel}`}>{negocio.telefonoVisible}</a>
+        · {negocio.instagram}
+      </p>
+      <p class="legal">© {anio} {negocio.nombre}. Ciudad de México.</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .pie {
+    background: var(--tostado);
+    color: var(--papel);
+    padding-block: 4rem 6rem;
+  }
+
+  .cierre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid rgb(243 235 221 / 0.15);
+  }
+
+  .frase {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    line-height: 1.15;
+    max-width: 18ch;
+  }
+
+  .datos {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 2rem;
+    color: rgb(243 235 221 / 0.8);
+    font-size: 0.975rem;
+  }
+
+  .marca {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--papel);
+    margin-bottom: 0.25rem;
+  }
+
+  .datos a {
+    text-underline-offset: 3px;
+  }
+
+  .legal {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: rgb(243 235 221 / 0.55);
+  }
+
+  @media (min-width: 720px) {
+    .pie {
+      padding-bottom: 4rem;
+    }
+  }
+</style>

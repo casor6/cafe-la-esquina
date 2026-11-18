@@ -1,0 +1,159 @@
+---
+import { ArrowDown } from "@lucide/astro";
+import BotonWhatsApp from "./BotonWhatsApp.astro";
+import Fachada from "./ilustraciones/Fachada.astro";
+---
+
+<section id="inicio" class="portada">
+  <div class="contenedor rejilla">
+    <div class="texto">
+      <p class="etiqueta">Colonia Roma · Colima y Córdoba</p>
+      <h1>
+        Café de Oaxaca y Veracruz, <em>tostado aquí mismo</em> cada martes.
+      </h1>
+      <p class="bajada">
+        Somos la cafetería de la cuadra. Compramos el grano directo a dos fincas, lo tostamos en
+        un tostador de 5 kilos junto a la barra y lo servimos esa misma semana.
+      </p>
+      <ul class="datos">
+        <li>Tostamos en casa</li>
+        <li>Pan de la panadería de al lado</li>
+        <li>Te sabemos el nombre</li>
+      </ul>
+      <div class="acciones">
+        <BotonWhatsApp />
+        <a class="enlace-menu" href="#menu">
+          Ver menú
+          <ArrowDown size={18} aria-hidden="true" />
+        </a>
+      </div>
+    </div>
+    <div class="ilustracion">
+      <Fachada />
+    </div>
+  </div>
+</section>
+
+<aside class="tira" aria-label="Aviso">
+  <div class="contenedor">
+    <p>
+      <strong>Martes de tueste:</strong> si pasas antes de las 11, huele a café hasta la esquina.
+    </p>
+  </div>
+</aside>
+
+<style>
+  .portada {
+    padding-block: 3rem 3.5rem;
+    overflow: hidden;
+  }
+
+  .rejilla {
+    display: grid;
+    gap: 2.5rem;
+    align-items: center;
+  }
+
+  .etiqueta {
+    color: var(--terracota);
+    margin-bottom: 1.25rem;
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 6.5vw, 4.5rem);
+    letter-spacing: -0.02em;
+    max-width: 16ch;
+  }
+
+  h1 em {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--terracota);
+  }
+
+  .bajada {
+    margin-top: 1.5rem;
+    max-width: 46ch;
+    font-size: 1.125rem;
+    color: var(--tostado-suave);
+  }
+
+  .datos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0;
+    list-style: none;
+    margin: 1.75rem 0 0;
+    padding: 0;
+    font-weight: 600;
+  }
+
+  .datos li:not(:last-child)::after {
+    content: "·";
+    margin-inline: 0.75rem;
+    color: var(--terracota);
+  }
+
+  .acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.25rem 1.75rem;
+    margin-top: 2.25rem;
+  }
+
+  .enlace-menu {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 5px;
+    text-decoration-color: var(--mostaza);
+  }
+
+  .enlace-menu:hover {
+    color: var(--terracota);
+  }
+
+  .ilustracion {
+    max-width: 30rem;
+    justify-self: center;
+    width: 100%;
+  }
+
+  .tira {
+    background: var(--mostaza);
+    color: var(--tostado);
+    padding-block: 0.9rem;
+    border-block: 2px solid var(--tostado);
+  }
+
+  .tira p {
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    font-style: italic;
+  }
+
+  .tira strong {
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  @media (min-width: 1024px) {
+    .portada {
+      padding-block: 4.5rem 0;
+    }
+
+    .rejilla {
+      grid-template-columns: 1.15fr 0.85fr;
+      align-items: end;
+      gap: 3rem;
+    }
+
+    .texto {
+      padding-bottom: 4.5rem;
+    }
+  }
+</style>
