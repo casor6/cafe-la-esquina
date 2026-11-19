@@ -7,6 +7,7 @@
   - Una sola rama de Neon. La base `neondb_test` es solo para pruebas e2e. La app usa el rol `cafe_app` (solo DML); el dueño solo migra.
   - Dinero en centavos (`Int`). Zona horaria `America/Mexico_City`.
   - Pago en caja al recoger. Estados: recibido → preparando → listo → entregado, sin cancelado.
+  - `.vercelignore` excluye `/api`: Vercel convierte en funciones serverless todo lo que esté en `api/` de la raíz y el plan Hobby solo permite 12. No lo quites.
   - En `api/` instala dependencias con `npx npm@11 install` (npm 10.9 falla con un bug de peers).
   - Railway: proyecto `cafe-la-esquina-api`, servicio `api`, dominio `https://cafe-api.multilabs.dev` (CNAME en Cloudflare sin proxy). La configuración vive en `api/.railway/railway.ts` (variables no administradas por código); despliegue con `railway up --service api` desde `api/`. `TRUST_PROXY=1`: Railway agrega un solo salto.
   - Página de esta rama: `https://pedidos.multilabs.dev` (único origen en `CORS_ORIGINS`). Llama a la API directo, sin rewrite: `API_URL` se usa en el build para el menú y se inyecta en `<html data-api>` para `src/lib/cliente.ts` (`credentials: "include"`). La cookie `__Host-sesion` funciona porque página y API son el mismo sitio (`multilabs.dev`); la protección contra otros subdominios es la lista de orígenes.
