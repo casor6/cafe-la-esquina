@@ -1,10 +1,23 @@
 ---
+import { ShoppingBag } from "@lucide/astro";
 import BotonWhatsApp from "./BotonWhatsApp.astro";
 import Taza from "./ilustraciones/Taza.astro";
-import { menu, extraLeche } from "../data/negocio";
+import { obtenerMenuEnBuild, pesos, type CategoriaMenu } from "../lib/api";
 
-const precio = (valor: number) => `$${valor}`;
-const [cafe, acompanar] = menu;
+const categorias = await obtenerMenuEnBuild();
+const [cafe, ...resto] = categorias;
+const acompanar: CategoriaMenu = {
+  id: 0,
+  nombre: resto.map((c) => c.nombre).join(" · "),
+  productos: resto.flatMap((c) => c.productos),
+};
+
+const conExtra = cafe.productos.filter((p) => p.opciones?.lista.some((o) => o.precioExtraCentavos > 0));
+const extras = conExtra[0]?.opciones?.lista.filter((o) => o.precioExtraCentavos > 0) ?? [];
+const nota =
+  extras.length > 0
+    ? `${conExtra[0].opciones!.grupo} de ${extras.map((o) => o.nombre.toLowerCase()).join(" o ")} +${pesos(extras[0].precioExtraCentavos)} en ${conExtra.map((p) => p.nombre.toLowerCase()).join(" y ")}`
+    : null;
 ---
 
 <section id="menu" class="menu" aria-labelledby="menu-titulo">
@@ -17,34 +30,34 @@ const [cafe, acompanar] = menu;
 
     <div class="pizarron">
       <div class="columna principal">
-        <h3>{cafe.titulo}</h3>
+        <h3>{cafe.nombre}</h3>
         <ul>
           {
-            cafe.platillos.map((p) => (
+            cafe.productos.map((p) => (
               <li>
                 <div class="linea">
                   <span class="nombre">{p.nombre}</span>
                   <span class="puntos" aria-hidden="true" />
-                  <span class="precio">{precio(p.precio)}</span>
+                  <span class="precio">{pesos(p.precioCentavos)}</span>
                 </div>
                 <span class="detalle">{p.detalle}</span>
               </li>
             ))
           }
         </ul>
-        <p class="nota">Leche de avena o almendra +{precio(extraLeche)}</p>
+        {nota && <p class="nota">{nota}</p>}
       </div>
 
       <div class="columna secundaria">
-        <h3>{acompanar.titulo}</h3>
+        <h3>{acompanar.nombre}</h3>
         <ul>
           {
-            acompanar.platillos.map((p) => (
+            acompanar.productos.map((p) => (
               <li>
                 <div class="linea">
                   <span class="nombre">{p.nombre}</span>
                   <span class="puntos" aria-hidden="true" />
-                  <span class="precio">{precio(p.precio)}</span>
+                  <span class="precio">{pesos(p.precioCentavos)}</span>
                 </div>
                 <span class="detalle">{p.detalle}</span>
               </li>
@@ -55,8 +68,12 @@ const [cafe, acompanar] = menu;
           <div class="dibujo">
             <Taza />
           </div>
-          <p>¿Vas con prisa? Mándanos tu pedido y lo tenemos listo cuando llegues.</p>
-          <BotonWhatsApp variante="claro" texto="Pedir esto por WhatsApp" />
+          <p>¿Vas con prisa? Haz tu pedido aquí, elige a qué hora pasas y pagas en caja al recoger.</p>
+          <a class="pedir" href="/pedido">
+            <ShoppingBag size={20} stroke-width={2} aria-hidden="true" />
+            <span>Pedir para recoger</span>
+          </a>
+          <p class="alterno">¿Prefieres escribirnos? <BotonWhatsApp variante="enlace" texto="Pide por WhatsApp" /></p>
         </div>
       </div>
     </div>
@@ -172,6 +189,30 @@ const [cafe, acompanar] = menu;
   .dibujo {
     width: 3.5rem;
     color: var(--mostaza);
+  }
+
+  .pedir {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.9rem 1.4rem;
+    border-radius: var(--radio);
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    background: var(--papel);
+    color: var(--tostado);
+    box-shadow: 0 3px 0 rgb(0 0 0 / 0.35);
+    transition: background-color 0.15s ease;
+  }
+
+  .pedir:hover {
+    background: #fff;
+  }
+
+  .alterno {
+    font-size: 0.9375rem;
+    color: rgb(243 235 221 / 0.75);
   }
 
   @media (min-width: 720px) {

@@ -5,22 +5,25 @@ import "@fontsource/instrument-sans/400.css";
 import "@fontsource/instrument-sans/500.css";
 import "@fontsource/instrument-sans/600.css";
 import "../styles/global.css";
+import { urlApi } from "../lib/api";
 
 interface Props {
   titulo: string;
   descripcion: string;
+  indexable?: boolean;
 }
 
-const { titulo, descripcion } = Astro.props;
+const { titulo, descripcion, indexable = true } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="es-MX">
+<html lang="es-MX" data-api={urlApi()}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{titulo}</title>
     <meta name="description" content={descripcion} />
+    {!indexable && <meta name="robots" content="noindex, nofollow" />}
     <meta name="theme-color" content="#2a1c13" />
     <meta property="og:title" content={titulo} />
     <meta property="og:description" content={descripcion} />

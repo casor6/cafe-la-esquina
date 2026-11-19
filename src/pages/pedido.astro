@@ -1,0 +1,892 @@
+---
+import { CircleCheck, Minus, Plus, Send, ShoppingBag, Wallet } from "@lucide/astro";
+import Base from "../layouts/Base.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { negocio } from "../data/negocio";
+import { obtenerMenuEnBuild, pesos } from "../lib/api";
+
+const categorias = await obtenerMenuEnBuild();
+---
+
+<Base
+  titulo="Pide para recoger · Café La Esquina"
+  descripcion="Arma tu pedido de Café La Esquina, elige a qué hora pasas y paga en caja al recoger. Colima esquina Córdoba, Roma Norte."
+>
+  <Header />
+  <main class="pagina">
+    <div class="contenedor">
+      <header class="cabecera">
+        <p class="etiqueta">Pedido para recoger</p>
+        <h1>Lo pides aquí, lo recoges en la barra</h1>
+        <p class="intro">
+          Elige tus cosas y la hora en que pasas. Pagas en caja al llegar, en {negocio.direccion.calle}.
+        </p>
+      </header>
+
+      <div class="distribucion">
+        <section class="carta" aria-label="Menú">
+          {
+            categorias.map((categoria) => (
+              <div class="categoria">
+                <h2>{categoria.nombre}</h2>
+                <ul>
+                  {categoria.productos.map((p) => (
+                    <li
+                      class="producto"
+                      data-producto={p.id}
+                      data-nombre={p.nombre}
+                      data-precio={p.precioCentavos}
+                      data-grupo={p.opciones?.grupo ?? ""}
+                      data-obligatorio={p.opciones?.obligatorio ? "si" : "no"}
+                    >
+                      <div class="producto-info">
+                        <div class="producto-linea">
+                          <h3>{p.nombre}</h3>
+                          <span class="producto-precio">{pesos(p.precioCentavos)}</span>
+                        </div>
+                        <p class="producto-detalle">{p.detalle}</p>
+                      </div>
+                      {p.opciones && (
+                        <fieldset class="opciones">
+                          <legend>{p.opciones.grupo}</legend>
+                          {p.opciones.lista.map((o) => (
+                            <label class="chip">
+                              <input
+                                type="radio"
+                                name={`opcion-${p.id}`}
+                                value={o.id}
+                                data-nombre={o.nombre}
+                                data-extra={o.precioExtraCentavos}
+                                checked={o.porDefecto}
+                              />
+                              <span>
+                                {o.nombre}
+                                {o.precioExtraCentavos > 0 && ` +${pesos(o.precioExtraCentavos)}`}
+                              </span>
+                            </label>
+                          ))}
+                        </fieldset>
+                      )}
+                      <div class="producto-accion">
+                        <p class="aviso" role="alert" hidden />
+                        <button type="button" class="agregar">
+                          <Plus size={18} stroke-width={2.25} aria-hidden="true" />
+                          <span>Agregar</span>
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          }
+        </section>
+
+        <aside id="tu-pedido" class="comanda" aria-live="polite">
+          <div data-vista="armando">
+            <h2>Tu comanda</h2>
+            <p class="vacia">Todavía no agregas nada. Empieza por un café.</p>
+            <ul class="lineas"></ul>
+            <div class="total">
+              <span>Total</span>
+              <strong data-total>$0</strong>
+            </div>
+
+            <form class="datos" novalidate>
+              <label>
+                <span>Tu nombre</span>
+                <input name="nombre" autocomplete="given-name" maxlength="60" required />
+              </label>
+              <label>
+                <span>Teléfono</span>
+                <input
+                  name="telefono"
+                  type="tel"
+                  inputmode="numeric"
+                  autocomplete="tel-national"
+                  maxlength="14"
+                  placeholder="55 1234 5678"
+                  required
+                />
+              </label>
+              <label>
+                <span>¿A qué hora pasas?</span>
+                <select name="hora" required disabled>
+                  <option value="">Cargando horarios…</option>
+                </select>
+              </label>
+              <p class="error-form" role="alert" hidden></p>
+              <button type="submit" class="enviar" disabled>
+                <Send size={18} stroke-width={2.25} aria-hidden="true" />
+                <span>Enviar pedido</span>
+              </button>
+              <p class="pago">
+                <Wallet size={16} stroke-width={2} aria-hidden="true" />
+                <span>Pagas en caja al recoger.</span>
+              </p>
+            </form>
+          </div>
+
+          <div data-vista="confirmado" hidden>
+            <p class="confirmado-etiqueta">
+              <CircleCheck size={20} stroke-width={2.25} aria-hidden="true" />
+              <span>Pedido recibido</span>
+            </p>
+            <h2 tabindex="-1">Folio <span data-folio></span></h2>
+            <p class="confirmado-hora">Pasa por él a las <strong data-hora></strong>.</p>
+            <ul class="resumen"></ul>
+            <div class="total">
+              <span>Total a pagar en caja</span>
+              <strong data-total-final></strong>
+            </div>
+            <p class="confirmado-nota">
+              Di tu nombre o tu folio en la barra. Si algo cambia, llámanos al
+              <a href={`tel:${negocio.telefonoTel}`}>{negocio.telefonoVisible}</a>.
+            </p>
+            <button type="button" class="otro">Hacer otro pedido</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <a class="barra-movil" href="#tu-pedido" hidden>
+      <ShoppingBag size={18} stroke-width={2} aria-hidden="true" />
+      <span data-piezas></span>
+      <strong data-total-movil></strong>
+    </a>
+
+    <template id="plantilla-linea">
+      <li class="linea">
+        <div class="linea-texto">
+          <span class="linea-nombre"></span>
+          <span class="linea-opcion"></span>
+        </div>
+        <div class="cantidad">
+          <button type="button" data-accion="menos" aria-label="Quitar uno">
+            <Minus size={16} stroke-width={2.25} aria-hidden="true" />
+          </button>
+          <span class="numero"></span>
+          <button type="button" data-accion="mas" aria-label="Agregar uno">
+            <Plus size={16} stroke-width={2.25} aria-hidden="true" />
+          </button>
+        </div>
+        <span class="linea-precio"></span>
+      </li>
+    </template>
+  </main>
+  <Footer />
+</Base>
+
+<script>
+  import { pesos, type PedidoCreado } from "../lib/api";
+  import { hora, llamarApi, nodo } from "../lib/cliente";
+
+  interface Linea {
+    clave: string;
+    productoId: number;
+    opcionId?: number;
+    nombre: string;
+    opcion: string | null;
+    unitario: number;
+    cantidad: number;
+  }
+
+  const CLAVE_GUARDADO = "comanda-la-esquina";
+  const MAX_POR_LINEA = 10;
+
+  const $ = <T extends Element>(selector: string, raiz: ParentNode = document) =>
+    raiz.querySelector(selector) as T;
+
+  const vistaArmando = $<HTMLElement>('[data-vista="armando"]');
+  const vistaConfirmado = $<HTMLElement>('[data-vista="confirmado"]');
+  const listaLineas = $<HTMLUListElement>(".lineas");
+  const textoVacio = $<HTMLElement>(".vacia");
+  const total = $<HTMLElement>("[data-total]");
+  const formulario = $<HTMLFormElement>(".datos");
+  const selectHora = $<HTMLSelectElement>('select[name="hora"]');
+  const errorForm = $<HTMLElement>(".error-form");
+  const botonEnviar = $<HTMLButtonElement>(".enviar");
+  const barraMovil = $<HTMLAnchorElement>(".barra-movil");
+  const plantilla = $<HTMLTemplateElement>("#plantilla-linea");
+
+  let lineas: Linea[] = leerGuardado();
+  let hayHorarios = false;
+  let enviando = false;
+
+  function leerGuardado(): Linea[] {
+    try {
+      const crudo = JSON.parse(sessionStorage.getItem(CLAVE_GUARDADO) ?? "[]") as unknown;
+      if (!Array.isArray(crudo)) return [];
+      return crudo.filter(
+        (l): l is Linea =>
+          typeof l === "object" &&
+          l !== null &&
+          Number.isInteger(l.productoId) &&
+          Number.isInteger(l.cantidad) &&
+          typeof l.nombre === "string" &&
+          Number.isInteger(l.unitario) &&
+          document.querySelector(`[data-producto="${Number(l.productoId)}"]`) !== null,
+      );
+    } catch {
+      return [];
+    }
+  }
+
+  function guardar(): void {
+    sessionStorage.setItem(CLAVE_GUARDADO, JSON.stringify(lineas));
+  }
+
+  function totalCentavos(): number {
+    return lineas.reduce((suma, l) => suma + l.unitario * l.cantidad, 0);
+  }
+
+  function actualizarBoton(): void {
+    botonEnviar.disabled = enviando || lineas.length === 0 || !hayHorarios;
+  }
+
+  function pintar(): void {
+    listaLineas.replaceChildren(
+      ...lineas.map((linea) => {
+        const fragmento = plantilla.content.cloneNode(true) as DocumentFragment;
+        const li = $<HTMLLIElement>(".linea", fragmento);
+        li.dataset.clave = linea.clave;
+        $<HTMLElement>(".linea-nombre", li).textContent = linea.nombre;
+        $<HTMLElement>(".linea-opcion", li).textContent = linea.opcion ?? "";
+        $<HTMLElement>(".numero", li).textContent = String(linea.cantidad);
+        $<HTMLElement>(".linea-precio", li).textContent = pesos(linea.unitario * linea.cantidad);
+        $<HTMLButtonElement>('[data-accion="mas"]', li).disabled = linea.cantidad >= MAX_POR_LINEA;
+        return li;
+      }),
+    );
+
+    const piezas = lineas.reduce((suma, l) => suma + l.cantidad, 0);
+    textoVacio.hidden = lineas.length > 0;
+    total.textContent = pesos(totalCentavos());
+    barraMovil.hidden = lineas.length === 0;
+    $<HTMLElement>("[data-piezas]", barraMovil).textContent = `${piezas} ${piezas === 1 ? "pieza" : "piezas"}`;
+    $<HTMLElement>("[data-total-movil]", barraMovil).textContent = pesos(totalCentavos());
+    actualizarBoton();
+    guardar();
+  }
+
+  function agregar(producto: HTMLElement): void {
+    const aviso = $<HTMLElement>(".aviso", producto);
+    const elegida = producto.querySelector<HTMLInputElement>('input[type="radio"]:checked');
+    const nombre = producto.dataset.nombre ?? "";
+
+    if (producto.dataset.obligatorio === "si" && !elegida) {
+      aviso.textContent = `Elige ${(producto.dataset.grupo ?? "una opción").toLowerCase()}.`;
+      aviso.hidden = false;
+      return;
+    }
+    aviso.hidden = true;
+
+    const productoId = Number(producto.dataset.producto);
+    const opcionId = elegida ? Number(elegida.value) : undefined;
+    const clave = `${productoId}-${opcionId ?? 0}`;
+    const existente = lineas.find((l) => l.clave === clave);
+
+    if (existente) {
+      existente.cantidad = Math.min(existente.cantidad + 1, MAX_POR_LINEA);
+    } else {
+      lineas.push({
+        clave,
+        productoId,
+        opcionId,
+        nombre,
+        opcion: elegida?.dataset.nombre ?? null,
+        unitario: Number(producto.dataset.precio) + Number(elegida?.dataset.extra ?? 0),
+        cantidad: 1,
+      });
+    }
+    pintar();
+  }
+
+  function cambiarCantidad(clave: string, delta: number): void {
+    const linea = lineas.find((l) => l.clave === clave);
+    if (!linea) return;
+    linea.cantidad += delta;
+    if (linea.cantidad <= 0) lineas = lineas.filter((l) => l.clave !== clave);
+    if (linea.cantidad > MAX_POR_LINEA) linea.cantidad = MAX_POR_LINEA;
+    pintar();
+  }
+
+  async function cargarHorarios(): Promise<void> {
+    selectHora.disabled = true;
+    const r = await llamarApi<{ horarios: string[] }>("/pedidos/horarios");
+    if (!r.ok || !r.datos) {
+      selectHora.replaceChildren(nodo("option", undefined, "No pudimos cargar los horarios"));
+      mostrarError(r.mensaje || "No pudimos cargar los horarios. Recarga la página.");
+      hayHorarios = false;
+    } else if (r.datos.horarios.length === 0) {
+      selectHora.replaceChildren(nodo("option", undefined, "Por hoy ya no hay horarios"));
+      mostrarError("Por hoy ya no tomamos pedidos para recoger. Revisa nuestro horario y vuelve mañana.");
+      hayHorarios = false;
+    } else {
+      const opciones = r.datos.horarios.map((iso) => {
+        const opcion = nodo("option", undefined, hora(iso));
+        opcion.value = iso;
+        return opcion;
+      });
+      const primera = nodo("option", undefined, "Elige una hora");
+      primera.value = "";
+      selectHora.replaceChildren(primera, ...opciones);
+      selectHora.disabled = false;
+      hayHorarios = true;
+      errorForm.hidden = true;
+    }
+    actualizarBoton();
+  }
+
+  function mostrarError(mensaje: string): void {
+    errorForm.textContent = mensaje;
+    errorForm.hidden = false;
+  }
+
+  function validar(datos: FormData): string | null {
+    const nombre = String(datos.get("nombre") ?? "").trim();
+    const telefono = String(datos.get("telefono") ?? "").replace(/[\s-]/g, "");
+    if (lineas.length === 0) return "Agrega al menos un producto.";
+    if (nombre.length < 2) return "Escribe tu nombre para que sepamos de quién es el pedido.";
+    if (!/^\d{10}$/.test(telefono)) return "El teléfono debe tener 10 dígitos.";
+    if (!datos.get("hora")) return "Elige a qué hora pasas.";
+    return null;
+  }
+
+  function mostrarConfirmacion(pedido: PedidoCreado): void {
+    $<HTMLElement>("[data-folio]").textContent = `#${pedido.folio}`;
+    $<HTMLElement>("[data-hora]").textContent = hora(pedido.horaRecogida);
+    $<HTMLElement>("[data-total-final]").textContent = pesos(pedido.totalCentavos);
+    $<HTMLUListElement>(".resumen").replaceChildren(
+      ...pedido.items.map((item) => {
+        const li = nodo("li");
+        const texto = `${item.cantidad} × ${item.nombre}${item.opcion ? ` (${item.opcion.toLowerCase()})` : ""}`;
+        li.append(nodo("span", undefined, texto), nodo("span", undefined, pesos(item.subtotalCentavos)));
+        return li;
+      }),
+    );
+    vistaArmando.hidden = true;
+    vistaConfirmado.hidden = false;
+    barraMovil.hidden = true;
+    document.getElementById("tu-pedido")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    $<HTMLElement>('[data-vista="confirmado"] h2').focus({ preventScroll: true });
+  }
+
+  document.querySelectorAll<HTMLElement>(".producto").forEach((producto) => {
+    $<HTMLButtonElement>(".agregar", producto).addEventListener("click", () => agregar(producto));
+    producto.addEventListener("change", () => {
+      $<HTMLElement>(".aviso", producto).hidden = true;
+    });
+  });
+
+  listaLineas.addEventListener("click", (evento) => {
+    const boton = (evento.target as Element).closest<HTMLButtonElement>("button[data-accion]");
+    const clave = boton?.closest<HTMLElement>(".linea")?.dataset.clave;
+    if (!boton || !clave) return;
+    cambiarCantidad(clave, boton.dataset.accion === "mas" ? 1 : -1);
+  });
+
+  formulario.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    const datos = new FormData(formulario);
+    const problema = validar(datos);
+    if (problema) {
+      mostrarError(problema);
+      return;
+    }
+
+    errorForm.hidden = true;
+    enviando = true;
+    actualizarBoton();
+
+    const r = await llamarApi<PedidoCreado>("/pedidos", {
+      metodo: "POST",
+      cuerpo: {
+        nombre: String(datos.get("nombre")).trim(),
+        telefono: String(datos.get("telefono")),
+        horaRecogida: String(datos.get("hora")),
+        items: lineas.map((l) => ({
+          productoId: l.productoId,
+          cantidad: l.cantidad,
+          ...(l.opcionId ? { opcionId: l.opcionId } : {}),
+        })),
+      },
+    });
+
+    enviando = false;
+    if (r.ok && r.datos) {
+      lineas = [];
+      sessionStorage.removeItem(CLAVE_GUARDADO);
+      formulario.reset();
+      pintar();
+      mostrarConfirmacion(r.datos);
+      return;
+    }
+
+    mostrarError(r.mensaje || "No pudimos enviar tu pedido. Intenta de nuevo.");
+    if (r.status === 400 && r.mensaje.includes("hora")) await cargarHorarios();
+    actualizarBoton();
+  });
+
+  $<HTMLButtonElement>(".otro").addEventListener("click", () => {
+    vistaConfirmado.hidden = true;
+    vistaArmando.hidden = false;
+    void cargarHorarios();
+    document.querySelector(".carta")?.scrollIntoView({ behavior: "smooth" });
+  });
+
+  pintar();
+  void cargarHorarios();
+</script>
+
+<style>
+  .pagina {
+    padding-block: 3.5rem 6rem;
+  }
+
+  .cabecera {
+    max-width: 40rem;
+    margin-bottom: 2.75rem;
+  }
+
+  .cabecera .etiqueta {
+    color: var(--terracota);
+    margin-bottom: 0.75rem;
+  }
+
+  h1 {
+    font-size: clamp(2.1rem, 5vw, 3.2rem);
+    letter-spacing: -0.015em;
+  }
+
+  .intro {
+    margin-top: 0.9rem;
+    color: var(--tostado-suave);
+  }
+
+  .distribucion {
+    display: grid;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .categoria + .categoria {
+    margin-top: 2.5rem;
+  }
+
+  .categoria h2 {
+    font-size: 1.6rem;
+    font-style: italic;
+    font-weight: 500;
+    color: var(--terracota);
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--tostado);
+    margin-bottom: 0.25rem;
+  }
+
+  .categoria ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .producto {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.1rem 0;
+    border-bottom: 1px dashed rgb(42 28 19 / 0.25);
+  }
+
+  .producto-linea {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+  }
+
+  .producto h3 {
+    font-size: 1.3rem;
+    font-weight: 500;
+  }
+
+  .producto-precio {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .producto-detalle {
+    font-size: 0.9375rem;
+    color: var(--tostado-suave);
+  }
+
+  .opciones {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .opciones legend {
+    float: left;
+    margin-right: 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tostado-suave);
+  }
+
+  .chip {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .chip input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .chip span {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border: 1.5px solid rgb(42 28 19 / 0.35);
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease;
+  }
+
+  .chip input:checked + span {
+    background: var(--tostado);
+    border-color: var(--tostado);
+    color: var(--papel);
+  }
+
+  .chip input:focus-visible + span {
+    outline: 3px solid var(--mostaza);
+    outline-offset: 2px;
+  }
+
+  .producto-accion {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  .aviso {
+    margin-right: auto;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--terracota-oscura);
+  }
+
+  .agregar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1rem;
+    border: 0;
+    border-radius: var(--radio);
+    background: var(--botella);
+    color: var(--papel);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .agregar:hover {
+    background: var(--botella-claro);
+  }
+
+  .comanda {
+    --ticket: #fffcf5;
+    position: relative;
+    background: var(--ticket);
+    padding: 2rem 1.5rem 2.25rem;
+    border-radius: var(--radio) var(--radio) 0 0;
+    box-shadow: 0 14px 30px -18px rgb(42 28 19 / 0.55);
+    scroll-margin-top: 5.5rem;
+  }
+
+  .comanda::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -10px;
+    height: 10px;
+    background:
+      linear-gradient(135deg, var(--ticket) 50%, transparent 50%) 0 0 / 20px 10px repeat-x,
+      linear-gradient(-135deg, var(--ticket) 50%, transparent 50%) 0 0 / 20px 10px repeat-x;
+  }
+
+  .comanda h2 {
+    font-size: 1.9rem;
+    font-style: italic;
+    font-weight: 500;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px dashed rgb(42 28 19 / 0.3);
+  }
+
+  .vacia {
+    padding-block: 1.25rem;
+    color: var(--tostado-suave);
+    font-size: 0.9375rem;
+  }
+
+  .lineas,
+  .resumen {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .lineas :global(.linea) {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding-block: 0.85rem;
+    border-bottom: 1px dotted rgb(42 28 19 / 0.25);
+  }
+
+  .lineas :global(.linea-texto) {
+    display: grid;
+  }
+
+  .lineas :global(.linea-nombre) {
+    font-weight: 600;
+  }
+
+  .lineas :global(.linea-opcion) {
+    font-size: 0.875rem;
+    color: var(--tostado-suave);
+  }
+
+  .lineas :global(.cantidad) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .lineas :global(.cantidad button) {
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border: 1.5px solid rgb(42 28 19 / 0.3);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--tostado);
+    cursor: pointer;
+  }
+
+  .lineas :global(.cantidad button:disabled) {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .lineas :global(.numero) {
+    min-width: 1.25rem;
+    text-align: center;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .lineas :global(.linea-precio) {
+    min-width: 3.5rem;
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-block: 1.1rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 2px dashed rgb(42 28 19 / 0.3);
+  }
+
+  .total strong {
+    font-family: var(--serif);
+    font-size: 1.75rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .datos {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.25rem;
+  }
+
+  .datos label {
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .datos input,
+  .datos select {
+    font: inherit;
+    font-weight: 400;
+    padding: 0.7rem 0.8rem;
+    border: 1.5px solid rgb(42 28 19 / 0.3);
+    border-radius: var(--radio);
+    background: #fff;
+    color: var(--tostado);
+  }
+
+  .datos input:focus,
+  .datos select:focus {
+    border-color: var(--tostado);
+  }
+
+  .error-form {
+    padding: 0.75rem 0.9rem;
+    border-left: 4px solid var(--terracota);
+    background: rgb(185 83 44 / 0.08);
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
+  .enviar,
+  .otro {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem 1.4rem;
+    border: 0;
+    border-radius: var(--radio);
+    background: var(--terracota);
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    box-shadow: 0 3px 0 var(--terracota-oscura);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .enviar:hover:not(:disabled),
+  .otro:hover {
+    background: var(--terracota-oscura);
+  }
+
+  .enviar:disabled {
+    background: rgb(42 28 19 / 0.25);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .pago {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    color: var(--tostado-suave);
+  }
+
+  .confirmado-etiqueta {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 600;
+    color: var(--botella);
+    margin-bottom: 0.75rem;
+  }
+
+  [data-vista="confirmado"] h2 {
+    font-size: 2.4rem;
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  [data-vista="confirmado"] h2:focus {
+    outline: none;
+  }
+
+  .confirmado-hora {
+    margin-block: 1rem 0.5rem;
+    font-size: 1.15rem;
+  }
+
+  .resumen :global(li) {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.5rem;
+    border-bottom: 1px dotted rgb(42 28 19 / 0.25);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .confirmado-nota {
+    margin-block: 1rem 1.5rem;
+    font-size: 0.9375rem;
+    color: var(--tostado-suave);
+  }
+
+  .otro {
+    width: 100%;
+    background: var(--tostado);
+    box-shadow: none;
+  }
+
+  .barra-movil {
+    position: fixed;
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.95rem 1.2rem;
+    border-radius: var(--radio);
+    background: var(--tostado);
+    color: var(--papel);
+    text-decoration: none;
+    box-shadow: 0 10px 24px rgb(42 28 19 / 0.35);
+  }
+
+  .barra-movil[hidden] {
+    display: none;
+  }
+
+  .barra-movil strong {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (min-width: 960px) {
+    .distribucion {
+      grid-template-columns: 1.35fr 1fr;
+      gap: 3.5rem;
+    }
+
+    .comanda {
+      position: sticky;
+      top: 6rem;
+      padding: 2.25rem 2rem 2.5rem;
+    }
+
+    .barra-movil {
+      display: none;
+    }
+  }
+</style>

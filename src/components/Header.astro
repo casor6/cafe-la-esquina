@@ -1,23 +1,24 @@
 ---
-import BotonWhatsApp from "./BotonWhatsApp.astro";
+import { ShoppingBag } from "@lucide/astro";
 ---
 
 <header class="encabezado">
   <div class="contenedor fila">
-    <a class="marca" href="#inicio">
+    <a class="marca" href="/#inicio">
       <span class="marca-pequena">Café</span>
       <span class="marca-grande">La Esquina</span>
     </a>
     <nav aria-label="Secciones">
       <ul>
-        <li><a href="#menu">Menú</a></li>
-        <li><a href="#horario">Horario</a></li>
-        <li><a href="#ubicacion">Dónde estamos</a></li>
+        <li><a href="/#menu">Menú</a></li>
+        <li><a href="/#horario">Horario</a></li>
+        <li><a href="/#ubicacion">Dónde estamos</a></li>
       </ul>
     </nav>
-    <div class="accion">
-      <BotonWhatsApp variante="compacto" texto="Pedir" />
-    </div>
+    <a class="pedir" href="/pedido">
+      <ShoppingBag size={18} stroke-width={2} aria-hidden="true" />
+      <span>Pedir</span>
+    </a>
   </div>
 </header>
 
@@ -57,6 +58,25 @@ import BotonWhatsApp from "./BotonWhatsApp.astro";
     font-size: 1.45rem;
     font-weight: 700;
     letter-spacing: -0.01em;
+  }
+
+  .pedir {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: var(--radio);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    line-height: 1;
+    text-decoration: none;
+    background: var(--tostado);
+    color: var(--papel);
+    transition: background-color 0.15s ease;
+  }
+
+  .pedir:hover {
+    background: var(--terracota);
   }
 
   nav {

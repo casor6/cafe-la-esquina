@@ -1,0 +1,654 @@
+---
+import { ArrowRight, LogIn, LogOut, Phone, RefreshCw } from "@lucide/astro";
+import Base from "../layouts/Base.astro";
+---
+
+<Base titulo="Panel de pedidos · Café La Esquina" descripcion="Panel interno de pedidos." indexable={false}>
+  <div class="panel">
+    <header class="barra">
+      <div class="marca">
+        <span class="marca-pequena">Café</span>
+        <span class="marca-grande">La Esquina</span>
+        <span class="marca-seccion">Pedidos</span>
+      </div>
+      <div class="controles" hidden>
+        <label class="fecha">
+          <span class="sr-only">Día</span>
+          <input type="date" name="fecha" />
+        </label>
+        <button type="button" class="boton-icono" data-accion="recargar">
+          <RefreshCw size={18} stroke-width={2} aria-hidden="true" />
+          <span>Actualizar</span>
+        </button>
+        <button type="button" class="boton-icono" data-accion="salir">
+          <LogOut size={18} stroke-width={2} aria-hidden="true" />
+          <span>Salir</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="acceso" hidden>
+        <form class="formulario-acceso" novalidate>
+          <h1>Entrar al panel</h1>
+          <label>
+            <span>Usuario</span>
+            <input name="usuario" autocomplete="username" maxlength="40" required />
+          </label>
+          <label>
+            <span>Contraseña</span>
+            <input name="contrasena" type="password" autocomplete="current-password" maxlength="128" required />
+          </label>
+          <p class="error" role="alert" hidden></p>
+          <button type="submit" class="entrar">
+            <LogIn size={18} stroke-width={2} aria-hidden="true" />
+            <span>Entrar</span>
+          </button>
+        </form>
+      </section>
+
+      <section class="tablero" hidden aria-live="polite">
+        <p class="estado-carga" role="status"></p>
+        <div class="columnas">
+          <section class="columna" data-estado="RECIBIDO">
+            <h2>Recibidos <span class="conteo"></span></h2>
+            <ol class="tarjetas"></ol>
+          </section>
+          <section class="columna" data-estado="PREPARANDO">
+            <h2>Preparando <span class="conteo"></span></h2>
+            <ol class="tarjetas"></ol>
+          </section>
+          <section class="columna" data-estado="LISTO">
+            <h2>Listos para recoger <span class="conteo"></span></h2>
+            <ol class="tarjetas"></ol>
+          </section>
+        </div>
+        <details class="entregados" data-estado="ENTREGADO">
+          <summary>Entregados <span class="conteo"></span></summary>
+          <ol class="tarjetas"></ol>
+        </details>
+      </section>
+    </main>
+  </div>
+
+  <template id="plantilla-tarjeta">
+    <li class="tarjeta">
+      <div class="tarjeta-cabeza">
+        <span class="folio"></span>
+        <span class="hora"></span>
+      </div>
+      <p class="cliente">
+        <span class="nombre"></span>
+        <a class="telefono">
+          <Phone size={14} stroke-width={2} aria-hidden="true" />
+          <span></span>
+        </a>
+      </p>
+      <ul class="items"></ul>
+      <div class="tarjeta-pie">
+        <span class="total"></span>
+        <button type="button" class="avanzar">
+          <span></span>
+          <ArrowRight size={16} stroke-width={2.25} aria-hidden="true" />
+        </button>
+      </div>
+      <p class="error-tarjeta" role="alert" hidden></p>
+    </li>
+  </template>
+</Base>
+
+<script>
+  import { pesos, type EstadoPedido, type PedidoAdmin } from "../lib/api";
+  import { hora, llamarApi, nodo } from "../lib/cliente";
+
+  const INTERVALO_MS = 20_000;
+  const SIGUIENTE: Record<EstadoPedido, string | null> = {
+    RECIBIDO: "Empezar a preparar",
+    PREPARANDO: "Marcar listo",
+    LISTO: "Entregado",
+    ENTREGADO: null,
+  };
+
+  const $ = <T extends Element>(selector: string, raiz: ParentNode = document) =>
+    raiz.querySelector(selector) as T;
+
+  const acceso = $<HTMLElement>(".acceso");
+  const tablero = $<HTMLElement>(".tablero");
+  const controles = $<HTMLElement>(".controles");
+  const formularioAcceso = $<HTMLFormElement>(".formulario-acceso");
+  const errorAcceso = $<HTMLElement>(".formulario-acceso .error");
+  const estadoCarga = $<HTMLElement>(".estado-carga");
+  const inputFecha = $<HTMLInputElement>('input[name="fecha"]');
+  const plantilla = $<HTMLTemplateElement>("#plantilla-tarjeta");
+
+  let temporizador: number | undefined;
+  let vistos = new Set<string>();
+  let primeraCarga = true;
+
+  function hoyEnCdmx(): string {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(new Date());
+  }
+
+  function mostrarAcceso(): void {
+    detenerSondeo();
+    tablero.hidden = true;
+    controles.hidden = true;
+    acceso.hidden = false;
+    $<HTMLInputElement>('input[name="usuario"]').focus();
+  }
+
+  function mostrarTablero(): void {
+    acceso.hidden = true;
+    tablero.hidden = false;
+    controles.hidden = false;
+    if (!inputFecha.value) inputFecha.value = hoyEnCdmx();
+    primeraCarga = true;
+    void cargar();
+    iniciarSondeo();
+  }
+
+  function iniciarSondeo(): void {
+    detenerSondeo();
+    temporizador = window.setInterval(() => {
+      if (document.visibilityState === "visible") void cargar();
+    }, INTERVALO_MS);
+  }
+
+  function detenerSondeo(): void {
+    if (temporizador) window.clearInterval(temporizador);
+    temporizador = undefined;
+  }
+
+  function tarjeta(pedido: PedidoAdmin, nuevo: boolean): HTMLLIElement {
+    const fragmento = plantilla.content.cloneNode(true) as DocumentFragment;
+    const li = $<HTMLLIElement>(".tarjeta", fragmento);
+    li.classList.toggle("nuevo", nuevo);
+    $<HTMLElement>(".folio", li).textContent = `#${pedido.folio}`;
+    $<HTMLElement>(".hora", li).textContent = hora(pedido.horaRecogida);
+    $<HTMLElement>(".nombre", li).textContent = pedido.nombreCliente;
+    const tel = $<HTMLAnchorElement>(".telefono", li);
+    tel.href = `tel:+52${pedido.telefono}`;
+    $<HTMLElement>("span", tel).textContent = pedido.telefono.replace(/(\d{2})(\d{4})(\d{4})/, "$1 $2 $3");
+    $<HTMLUListElement>(".items", li).replaceChildren(
+      ...pedido.items.map((item) => {
+        const fila = nodo("li");
+        fila.append(nodo("strong", undefined, `${item.cantidad}×`), nodo("span", undefined, ` ${item.nombre}`));
+        if (item.opcion) fila.append(nodo("em", undefined, ` · ${item.opcion}`));
+        return fila;
+      }),
+    );
+    $<HTMLElement>(".total", li).textContent = pesos(pedido.totalCentavos);
+
+    const boton = $<HTMLButtonElement>(".avanzar", li);
+    const etiqueta = SIGUIENTE[pedido.estado];
+    if (etiqueta) {
+      $<HTMLElement>("span", boton).textContent = etiqueta;
+      boton.addEventListener("click", () => void avanzar(pedido, boton, li));
+    } else {
+      boton.remove();
+    }
+    return li;
+  }
+
+  async function cargar(): Promise<void> {
+    const fecha = inputFecha.value || hoyEnCdmx();
+    const r = await llamarApi<{ fecha: string; pedidos: PedidoAdmin[] }>(
+      `/admin/pedidos?fecha=${encodeURIComponent(fecha)}`,
+    );
+    if (r.status === 401) {
+      mostrarAcceso();
+      return;
+    }
+    if (!r.ok || !r.datos) {
+      estadoCarga.textContent = r.mensaje || "No se pudo actualizar la lista.";
+      estadoCarga.classList.add("con-error");
+      return;
+    }
+
+    const pedidos = r.datos.pedidos;
+    const nuevosIds = new Set(pedidos.map((p) => p.id));
+    document.querySelectorAll<HTMLElement>("[data-estado]").forEach((contenedor) => {
+      const estado = contenedor.dataset.estado as EstadoPedido;
+      const deEstado = pedidos.filter((p) => p.estado === estado);
+      $<HTMLElement>(".conteo", contenedor).textContent = String(deEstado.length);
+      const lista = $<HTMLOListElement>(".tarjetas", contenedor);
+      lista.replaceChildren(...deEstado.map((p) => tarjeta(p, !primeraCarga && !vistos.has(p.id))));
+      if (deEstado.length === 0 && estado !== "ENTREGADO") {
+        lista.append(nodo("li", "sin-pedidos", "Nada por ahora."));
+      }
+    });
+    vistos = nuevosIds;
+    primeraCarga = false;
+
+    const pendientes = pedidos.filter((p) => p.estado !== "ENTREGADO").length;
+    document.title = pendientes > 0 ? `(${pendientes}) Pedidos · Café La Esquina` : "Pedidos · Café La Esquina";
+    estadoCarga.classList.remove("con-error");
+    estadoCarga.textContent = `Actualizado a las ${hora(new Date().toISOString())}. Se refresca solo cada 20 segundos.`;
+  }
+
+  async function avanzar(pedido: PedidoAdmin, boton: HTMLButtonElement, li: HTMLElement): Promise<void> {
+    boton.disabled = true;
+    const r = await llamarApi<{ estado: EstadoPedido }>(`/admin/pedidos/${encodeURIComponent(pedido.id)}/estado`, {
+      metodo: "PATCH",
+      cuerpo: { estadoActual: pedido.estado },
+    });
+    if (r.status === 401) {
+      mostrarAcceso();
+      return;
+    }
+    if (!r.ok) {
+      const error = $<HTMLElement>(".error-tarjeta", li);
+      error.textContent = r.mensaje || "No se pudo cambiar el estado.";
+      error.hidden = false;
+      boton.disabled = false;
+      if (r.status === 409) window.setTimeout(() => void cargar(), 1500);
+      return;
+    }
+    await cargar();
+  }
+
+  formularioAcceso.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    const datos = new FormData(formularioAcceso);
+    const usuario = String(datos.get("usuario") ?? "").trim();
+    const contrasena = String(datos.get("contrasena") ?? "");
+    if (!usuario || !contrasena) {
+      errorAcceso.textContent = "Escribe tu usuario y tu contraseña.";
+      errorAcceso.hidden = false;
+      return;
+    }
+    const boton = $<HTMLButtonElement>(".entrar");
+    boton.disabled = true;
+    const r = await llamarApi("/auth/login", { metodo: "POST", cuerpo: { usuario, contrasena } });
+    boton.disabled = false;
+    if (!r.ok) {
+      errorAcceso.textContent =
+        r.status === 401 ? "Usuario o contraseña incorrectos." : r.mensaje || "No se pudo entrar.";
+      errorAcceso.hidden = false;
+      return;
+    }
+    formularioAcceso.reset();
+    errorAcceso.hidden = true;
+    mostrarTablero();
+  });
+
+  $<HTMLButtonElement>('[data-accion="recargar"]').addEventListener("click", () => void cargar());
+  $<HTMLButtonElement>('[data-accion="salir"]').addEventListener("click", async () => {
+    await llamarApi("/auth/logout", { metodo: "POST" });
+    mostrarAcceso();
+  });
+  inputFecha.addEventListener("change", () => {
+    primeraCarga = true;
+    void cargar();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && !tablero.hidden) void cargar();
+  });
+
+  void llamarApi("/auth/yo").then((sesion) => {
+    if (sesion.ok) mostrarTablero();
+    else mostrarAcceso();
+  });
+</script>
+
+<style>
+  .panel {
+    min-height: 100vh;
+    background: var(--papel-oscuro);
+  }
+
+  .barra {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1.25rem;
+    background: var(--tostado);
+    color: var(--papel);
+  }
+
+  .marca {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-family: var(--serif);
+  }
+
+  .marca-pequena {
+    font-style: italic;
+    color: var(--mostaza);
+  }
+
+  .marca-grande {
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+
+  .marca-seccion {
+    margin-left: 0.5rem;
+    padding-left: 0.75rem;
+    border-left: 1px solid rgb(243 235 221 / 0.3);
+    font-family: var(--sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .controles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .controles[hidden] {
+    display: none;
+  }
+
+  .fecha input {
+    font: inherit;
+    font-size: 0.9375rem;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid rgb(243 235 221 / 0.35);
+    border-radius: var(--radio);
+    background: transparent;
+    color: var(--papel);
+    color-scheme: dark;
+  }
+
+  .boton-icono {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid rgb(243 235 221 / 0.35);
+    border-radius: var(--radio);
+    background: transparent;
+    color: var(--papel);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .boton-icono:hover {
+    background: rgb(243 235 221 / 0.1);
+  }
+
+  main {
+    padding: 1.5rem 1.25rem 4rem;
+  }
+
+  .acceso {
+    display: grid;
+    place-items: center;
+    min-height: 70vh;
+  }
+
+  .formulario-acceso {
+    width: min(100%, 24rem);
+    display: grid;
+    gap: 1rem;
+    padding: 2rem;
+    background: var(--papel);
+    border-radius: var(--radio);
+    box-shadow: 0 14px 30px -18px rgb(42 28 19 / 0.5);
+  }
+
+  .formulario-acceso h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .formulario-acceso label {
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .formulario-acceso input {
+    font: inherit;
+    font-weight: 400;
+    padding: 0.7rem 0.8rem;
+    border: 1.5px solid rgb(42 28 19 / 0.3);
+    border-radius: var(--radio);
+    background: #fff;
+  }
+
+  .error {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--terracota-oscura);
+  }
+
+  .entrar {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.9rem;
+    border: 0;
+    border-radius: var(--radio);
+    background: var(--terracota);
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .entrar:disabled {
+    opacity: 0.6;
+  }
+
+  .estado-carga {
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    color: var(--tostado-suave);
+  }
+
+  .estado-carga.con-error {
+    color: var(--terracota-oscura);
+    font-weight: 600;
+  }
+
+  .columnas {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .columna h2,
+  .entregados summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .conteo {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.6rem;
+    height: 1.6rem;
+    padding-inline: 0.4rem;
+    border-radius: 999px;
+    background: var(--tostado);
+    color: var(--papel);
+    font-size: 0.8125rem;
+    letter-spacing: 0;
+  }
+
+  [data-estado="RECIBIDO"] .conteo {
+    background: var(--terracota);
+  }
+
+  [data-estado="LISTO"] .conteo {
+    background: var(--botella);
+  }
+
+  .tarjetas {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .tarjetas :global(.sin-pedidos) {
+    padding: 1rem;
+    border: 1.5px dashed rgb(42 28 19 / 0.25);
+    border-radius: var(--radio);
+    font-size: 0.9375rem;
+    color: var(--tostado-suave);
+  }
+
+  .tarjetas :global(.tarjeta) {
+    padding: 1rem 1.1rem;
+    background: var(--papel);
+    border-radius: var(--radio);
+    border-left: 5px solid var(--tostado-suave);
+    box-shadow: 0 6px 14px -10px rgb(42 28 19 / 0.5);
+  }
+
+  [data-estado="RECIBIDO"] :global(.tarjeta) {
+    border-left-color: var(--terracota);
+  }
+
+  [data-estado="PREPARANDO"] :global(.tarjeta) {
+    border-left-color: var(--mostaza);
+  }
+
+  [data-estado="LISTO"] :global(.tarjeta) {
+    border-left-color: var(--botella);
+  }
+
+  .tarjetas :global(.tarjeta.nuevo) {
+    outline: 3px solid var(--mostaza);
+  }
+
+  .tarjetas :global(.tarjeta-cabeza) {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .tarjetas :global(.folio) {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .tarjetas :global(.hora) {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tarjetas :global(.cliente) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-block: 0.35rem 0.6rem;
+    font-weight: 600;
+  }
+
+  .tarjetas :global(.telefono) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--tostado-suave);
+  }
+
+  .tarjetas :global(.items) {
+    list-style: none;
+    margin: 0;
+    padding: 0.6rem 0;
+    border-block: 1px dotted rgb(42 28 19 / 0.25);
+    display: grid;
+    gap: 0.2rem;
+    font-size: 0.9375rem;
+  }
+
+  .tarjetas :global(.items em) {
+    color: var(--tostado-suave);
+  }
+
+  .tarjetas :global(.tarjeta-pie) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .tarjetas :global(.total) {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tarjetas :global(.avanzar) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.9rem;
+    border: 0;
+    border-radius: var(--radio);
+    background: var(--tostado);
+    color: var(--papel);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .tarjetas :global(.avanzar:hover) {
+    background: var(--terracota);
+  }
+
+  .tarjetas :global(.avanzar:disabled) {
+    opacity: 0.5;
+    cursor: wait;
+  }
+
+  .tarjetas :global(.error-tarjeta) {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--terracota-oscura);
+  }
+
+  .entregados {
+    margin-top: 2rem;
+  }
+
+  .entregados summary {
+    cursor: pointer;
+  }
+
+  @media (min-width: 900px) {
+    main {
+      padding-inline: 2rem;
+    }
+
+    .columnas {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: start;
+    }
+
+    .entregados .tarjetas {
+      grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    }
+  }
+</style>

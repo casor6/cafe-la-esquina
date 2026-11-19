@@ -1,0 +1,124 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EstadoPedido {
+  RECIBIDO
+  PREPARANDO
+  LISTO
+  ENTREGADO
+}
+
+model Categoria {
+  id        Int        @id @default(autoincrement())
+  nombre    String     @unique @db.VarChar(60)
+  orden     Int        @default(0)
+  productos Producto[]
+
+  @@map("categorias")
+}
+
+model GrupoOpciones {
+  id          Int        @id @default(autoincrement())
+  nombre      String     @unique @db.VarChar(40)
+  obligatorio Boolean    @default(false)
+  opciones    Opcion[]
+  productos   Producto[]
+
+  @@map("grupos_opciones")
+}
+
+model Opcion {
+  id                  Int           @id @default(autoincrement())
+  grupoId             Int           @map("grupo_id")
+  nombre              String        @db.VarChar(40)
+  precioExtraCentavos Int           @default(0) @map("precio_extra_centavos")
+  porDefecto          Boolean       @default(false) @map("por_defecto")
+  activo              Boolean       @default(true)
+  orden               Int           @default(0)
+  grupo               GrupoOpciones @relation(fields: [grupoId], references: [id])
+
+  @@unique([grupoId, nombre])
+  @@map("opciones")
+}
+
+model Producto {
+  id              Int            @id @default(autoincrement())
+  categoriaId     Int            @map("categoria_id")
+  grupoOpcionesId Int?           @map("grupo_opciones_id")
+  nombre          String         @unique @db.VarChar(60)
+  detalle         String         @db.VarChar(120)
+  precioCentavos  Int            @map("precio_centavos")
+  activo          Boolean        @default(true)
+  orden           Int            @default(0)
+  categoria       Categoria      @relation(fields: [categoriaId], references: [id])
+  grupoOpciones   GrupoOpciones? @relation(fields: [grupoOpcionesId], references: [id])
+  items           PedidoItem[]
+
+  @@map("productos")
+}
+
+model Pedido {
+  id            String       @id @default(uuid()) @db.Uuid
+  folio         Int          @unique @default(autoincrement())
+  nombreCliente String       @map("nombre_cliente") @db.VarChar(60)
+  telefono      String       @db.VarChar(10)
+  horaRecogida  DateTime     @map("hora_recogida") @db.Timestamptz(3)
+  estado        EstadoPedido @default(RECIBIDO)
+  totalCentavos Int          @map("total_centavos")
+  creadoEn      DateTime     @default(now()) @map("creado_en") @db.Timestamptz(3)
+  actualizadoEn DateTime     @updatedAt @map("actualizado_en") @db.Timestamptz(3)
+  items         PedidoItem[]
+
+  @@index([horaRecogida])
+  @@index([estado])
+  @@map("pedidos")
+}
+
+model PedidoItem {
+  id                     Int      @id @default(autoincrement())
+  pedidoId               String   @map("pedido_id") @db.Uuid
+  productoId             Int      @map("producto_id")
+  cantidad               Int
+  nombreProducto         String   @map("nombre_producto") @db.VarChar(60)
+  precioUnitarioCentavos Int      @map("precio_unitario_centavos")
+  nombreOpcion           String?  @map("nombre_opcion") @db.VarChar(40)
+  precioOpcionCentavos   Int      @default(0) @map("precio_opcion_centavos")
+  subtotalCentavos       Int      @map("subtotal_centavos")
+  pedido                 Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  producto               Producto @relation(fields: [productoId], references: [id])
+
+  @@index([pedidoId])
+  @@map("pedido_items")
+}
+
+model Admin {
+  id               Int       @id @default(autoincrement())
+  usuario          String    @unique @db.VarChar(40)
+  passwordHash     String    @map("password_hash")
+  intentosFallidos Int       @default(0) @map("intentos_fallidos")
+  bloqueadoHasta   DateTime? @map("bloqueado_hasta") @db.Timestamptz(3)
+  creadoEn         DateTime  @default(now()) @map("creado_en") @db.Timestamptz(3)
+  sesiones         Sesion[]
+
+  @@map("admins")
+}
+
+model Sesion {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique @map("token_hash") @db.Char(64)
+  adminId   Int      @map("admin_id")
+  expiraEn  DateTime @map("expira_en") @db.Timestamptz(3)
+  creadoEn  DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([expiraEn])
+  @@map("sesiones")
+}

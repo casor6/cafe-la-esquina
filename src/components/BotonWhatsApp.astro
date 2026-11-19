@@ -4,11 +4,12 @@ import { negocio } from "../data/negocio";
 
 interface Props {
   texto?: string;
-  variante?: "primario" | "claro" | "compacto" | "flotante";
+  variante?: "primario" | "claro" | "compacto" | "flotante" | "enlace";
 }
 
 const { texto = "Pedir por WhatsApp", variante = "primario" } = Astro.props;
 const esFlotante = variante === "flotante";
+const tamanoIcono = esFlotante ? 26 : variante === "enlace" ? 16 : 20;
 ---
 
 <a
@@ -18,7 +19,7 @@ const esFlotante = variante === "flotante";
   rel="noopener noreferrer"
   aria-label={esFlotante ? "Pedir por WhatsApp" : undefined}
 >
-  <MessageCircle size={esFlotante ? 26 : 20} stroke-width={2} aria-hidden="true" />
+  <MessageCircle size={tamanoIcono} stroke-width={2} aria-hidden="true" />
   {!esFlotante && <span>{texto}</span>}
 </a>
 
@@ -71,6 +72,21 @@ const esFlotante = variante === "flotante";
 
   .compacto:hover {
     background: var(--terracota);
+  }
+
+  .enlace {
+    display: inline-flex;
+    gap: 0.35rem;
+    padding: 0;
+    font-size: inherit;
+    color: var(--mostaza);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    vertical-align: baseline;
+  }
+
+  .enlace:hover {
+    color: var(--papel);
   }
 
   .flotante {
