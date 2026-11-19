@@ -1,0 +1,204 @@
+---
+import Base from "../layouts/Base.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import Iconos from "../components/Iconos.astro";
+import { MapPin } from "@lucide/astro";
+import { negocio } from "../data/negocio";
+---
+
+<Base
+  titulo="Tu pedido · Café La Esquina"
+  descripcion="Estado de tu pedido para recoger en Café La Esquina."
+  noIndexar
+>
+  <Header />
+  <main class="pagina-pedido" data-telefono={negocio.telefonoVisible} data-tel={negocio.telefonoTel}>
+    <div class="contenedor angosto">
+      <div id="estado-pedido" aria-live="polite">
+        <p class="cargando">Buscando tu pedido…</p>
+      </div>
+
+      <section class="donde" aria-labelledby="donde-titulo">
+        <h2 id="donde-titulo">Dónde recogerlo</h2>
+        <p>{negocio.direccion.calle}, {negocio.direccion.colonia}</p>
+        <p class="referencia">{negocio.direccion.referencia}</p>
+        <a href={negocio.direccion.mapa} target="_blank" rel="noopener noreferrer">
+          <MapPin size={18} aria-hidden="true" />
+          Abrir en el mapa
+        </a>
+      </section>
+
+      <p class="otro"><a href="/pedir">Hacer otro pedido</a></p>
+    </div>
+  </main>
+  <Footer />
+  <Iconos />
+</Base>
+
+<script>
+  import "../scripts/pedido";
+</script>
+
+<style is:global>
+  .pagina-pedido {
+    padding-block: 3rem 5rem;
+  }
+
+  .pagina-pedido .angosto {
+    max-width: 40rem;
+  }
+
+  .pagina-pedido .cargando,
+  .pagina-pedido .falla {
+    color: var(--tostado-suave);
+    padding-block: 2rem;
+  }
+
+  .pagina-pedido .etiqueta {
+    color: var(--terracota);
+    margin-bottom: 0.75rem;
+  }
+
+  .pagina-pedido h1 {
+    font-size: clamp(2.5rem, 7vw, 4rem);
+    letter-spacing: -0.02em;
+  }
+
+  .pagina-pedido .resumen {
+    margin-top: 0.75rem;
+    font-size: 1.125rem;
+    color: var(--tostado-suave);
+  }
+
+  .pagina-pedido .resumen strong {
+    color: var(--tostado);
+  }
+
+  .pagina-pedido .pasos {
+    list-style: none;
+    margin: 2rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+  }
+
+  .pagina-pedido .paso {
+    padding-top: 0.6rem;
+    border-top: 5px solid rgb(42 28 19 / 0.15);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--tostado-suave);
+  }
+
+  .pagina-pedido .paso.hecho {
+    border-color: var(--botella);
+    color: var(--botella);
+  }
+
+  .pagina-pedido .paso.actual {
+    border-color: var(--terracota);
+    color: var(--tostado);
+    font-weight: 700;
+  }
+
+  .pagina-pedido .mensaje {
+    margin-top: 1.25rem;
+    padding: 1.1rem 1.25rem;
+    background: var(--tostado);
+    color: var(--papel);
+    border-radius: var(--radio);
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    line-height: 1.35;
+  }
+
+  .pagina-pedido .mensaje.listo {
+    background: var(--botella);
+  }
+
+  .pagina-pedido .actualiza {
+    margin-top: 0.6rem;
+    font-size: 0.875rem;
+    color: var(--tostado-suave);
+  }
+
+  .pagina-pedido .comanda {
+    margin-top: 2rem;
+    background: #fffaf1;
+    padding: 1.5rem;
+    border-top: 6px solid var(--botella);
+    box-shadow: 0 14px 30px -18px rgb(42 28 19 / 0.55);
+  }
+
+  .pagina-pedido .comanda ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pagina-pedido .comanda li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.6rem;
+    border-bottom: 1px dashed rgb(42 28 19 / 0.25);
+  }
+
+  .pagina-pedido .comanda small {
+    display: block;
+    color: var(--tostado-suave);
+    font-size: 0.875rem;
+  }
+
+  .pagina-pedido .comanda .total {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 1rem;
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .pagina-pedido .pago {
+    margin-top: 0.75rem;
+    color: var(--botella);
+    font-weight: 500;
+  }
+
+  .pagina-pedido .donde {
+    margin-top: 2.5rem;
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .pagina-pedido .donde h2 {
+    font-size: 1.4rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .pagina-pedido .referencia {
+    color: var(--tostado-suave);
+  }
+
+  .pagina-pedido .donde a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+    font-weight: 600;
+    text-underline-offset: 4px;
+    text-decoration-color: var(--mostaza);
+    text-decoration-thickness: 2px;
+  }
+
+  .pagina-pedido .otro {
+    margin-top: 2rem;
+    font-weight: 600;
+  }
+
+  .pagina-pedido .otro a {
+    text-underline-offset: 4px;
+  }
+</style>

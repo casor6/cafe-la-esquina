@@ -1,0 +1,45 @@
+---
+import {
+  ArrowLeft,
+  BellRing,
+  Check,
+  CircleX,
+  Clock,
+  Info,
+  LogOut,
+  MapPin,
+  Minus,
+  Phone,
+  Plus,
+  ShoppingBag,
+  Trash,
+  Undo2,
+  X,
+} from "@lucide/astro";
+
+const iconos = {
+  regresar: ArrowLeft,
+  campana: BellRing,
+  listo: Check,
+  error: CircleX,
+  reloj: Clock,
+  aviso: Info,
+  salir: LogOut,
+  mapa: MapPin,
+  menos: Minus,
+  telefono: Phone,
+  mas: Plus,
+  bolsa: ShoppingBag,
+  quitar: Trash,
+  deshacer: Undo2,
+  cerrar: X,
+};
+---
+
+{
+  Object.entries(iconos).map(([nombre, Icono]) => (
+    <template data-icono={nombre}>
+      <Icono size={18} stroke-width={2} aria-hidden="true" />
+    </template>
+  ))
+}

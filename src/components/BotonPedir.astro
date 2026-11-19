@@ -1,0 +1,67 @@
+---
+import { ShoppingBag } from "@lucide/astro";
+
+interface Props {
+  texto?: string;
+  variante?: "primario" | "claro" | "compacto";
+}
+
+const { texto = "Pedir para recoger", variante = "primario" } = Astro.props;
+---
+
+<a class:list={["boton-pedir", variante]} href="/pedir">
+  <ShoppingBag size={20} stroke-width={2} aria-hidden="true" />
+  <span>{texto}</span>
+</a>
+
+<style>
+  .boton-pedir {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.9rem 1.4rem;
+    border-radius: var(--radio);
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    line-height: 1;
+    transition:
+      background-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .boton-pedir:active {
+    transform: translateY(1px);
+  }
+
+  .primario {
+    background: var(--terracota);
+    color: #fff;
+    box-shadow: 0 3px 0 var(--terracota-oscura);
+  }
+
+  .primario:hover {
+    background: var(--terracota-oscura);
+  }
+
+  .claro {
+    background: var(--papel);
+    color: var(--tostado);
+    box-shadow: 0 3px 0 rgb(0 0 0 / 0.35);
+  }
+
+  .claro:hover {
+    background: #fff;
+  }
+
+  .compacto {
+    padding: 0.6rem 1rem;
+    font-size: 0.9375rem;
+    background: var(--tostado);
+    color: var(--papel);
+  }
+
+  .compacto:hover {
+    background: var(--terracota);
+  }
+</style>

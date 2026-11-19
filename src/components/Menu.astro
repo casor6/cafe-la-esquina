@@ -1,10 +1,10 @@
 ---
-import BotonWhatsApp from "./BotonWhatsApp.astro";
+import BotonPedir from "./BotonPedir.astro";
 import Taza from "./ilustraciones/Taza.astro";
-import { menu, extraLeche } from "../data/negocio";
+import { obtenerCatalogo } from "../lib/catalogo";
+import { htmlColumnas } from "../lib/menuHtml";
 
-const precio = (valor: number) => `$${valor}`;
-const [cafe, acompanar] = menu;
+const columnas = htmlColumnas(await obtenerCatalogo());
 ---
 
 <section id="menu" class="menu" aria-labelledby="menu-titulo">
@@ -16,79 +16,65 @@ const [cafe, acompanar] = menu;
     </header>
 
     <div class="pizarron">
-      <div class="columna principal">
-        <h3>{cafe.titulo}</h3>
-        <ul>
-          {
-            cafe.platillos.map((p) => (
-              <li>
-                <div class="linea">
-                  <span class="nombre">{p.nombre}</span>
-                  <span class="puntos" aria-hidden="true" />
-                  <span class="precio">{precio(p.precio)}</span>
-                </div>
-                <span class="detalle">{p.detalle}</span>
-              </li>
-            ))
-          }
-        </ul>
-        <p class="nota">Leche de avena o almendra +{precio(extraLeche)}</p>
-      </div>
+      <div class="columna principal" data-menu="principal" set:html={columnas.principal} />
 
       <div class="columna secundaria">
-        <h3>{acompanar.titulo}</h3>
-        <ul>
-          {
-            acompanar.platillos.map((p) => (
-              <li>
-                <div class="linea">
-                  <span class="nombre">{p.nombre}</span>
-                  <span class="puntos" aria-hidden="true" />
-                  <span class="precio">{precio(p.precio)}</span>
-                </div>
-                <span class="detalle">{p.detalle}</span>
-              </li>
-            ))
-          }
-        </ul>
+        <div data-menu="resto" set:html={columnas.resto} />
         <div class="pedido">
           <div class="dibujo">
             <Taza />
           </div>
-          <p>¿Vas con prisa? Mándanos tu pedido y lo tenemos listo cuando llegues.</p>
-          <BotonWhatsApp variante="claro" texto="Pedir esto por WhatsApp" />
+          <p>¿Vas con prisa? Haz tu pedido aquí, elige a qué hora pasas y pagas en caja al recoger.</p>
+          <BotonPedir variante="claro" texto="Hacer mi pedido" />
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<style>
+<script>
+  import { obtenerCatalogo } from "../lib/catalogo";
+  import { htmlColumnas } from "../lib/menuHtml";
+
+  obtenerCatalogo()
+    .then((catalogo) => {
+      const columnas = htmlColumnas(catalogo);
+      const principal = document.querySelector('[data-menu="principal"]');
+      const resto = document.querySelector('[data-menu="resto"]');
+      if (principal && resto) {
+        principal.innerHTML = columnas.principal;
+        resto.innerHTML = columnas.resto;
+      }
+    })
+    .catch(() => {});
+</script>
+
+<style is:global>
   .menu {
     padding-block: 5rem;
   }
 
-  .cabecera {
+  .menu .cabecera {
     max-width: 38rem;
     margin-bottom: 2.5rem;
   }
 
-  .cabecera .etiqueta {
+  .menu .cabecera .etiqueta {
     color: var(--terracota);
     margin-bottom: 0.75rem;
   }
 
-  h2 {
+  .menu h2 {
     font-size: clamp(2rem, 4.5vw, 3rem);
     letter-spacing: -0.015em;
   }
 
-  .intro {
+  .menu .intro {
     margin-top: 0.9rem;
     color: var(--tostado-suave);
   }
 
-  .pizarron {
+  .menu .pizarron {
     display: grid;
     background: var(--tostado);
     color: var(--papel);
@@ -97,15 +83,19 @@ const [cafe, acompanar] = menu;
     box-shadow: 0 18px 40px -18px rgb(42 28 19 / 0.6);
   }
 
-  .columna {
+  .menu .columna {
     padding: 2.25rem 1.5rem;
   }
 
-  .secundaria {
+  .menu .secundaria {
     border-top: 1px dashed rgb(243 235 221 / 0.25);
   }
 
-  h3 {
+  .menu .bloque + .bloque {
+    margin-top: 2.25rem;
+  }
+
+  .menu h3 {
     font-size: 1.75rem;
     font-style: italic;
     font-weight: 500;
@@ -113,7 +103,7 @@ const [cafe, acompanar] = menu;
     margin-bottom: 1.25rem;
   }
 
-  ul {
+  .menu ul {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -121,45 +111,60 @@ const [cafe, acompanar] = menu;
     gap: 1.1rem;
   }
 
-  .linea {
+  .menu .linea {
     display: flex;
     align-items: baseline;
     gap: 0.5rem;
   }
 
-  .nombre {
+  .menu .nombre {
     font-family: var(--serif);
     font-size: 1.3rem;
     font-weight: 500;
   }
 
-  .puntos {
+  .menu .puntos {
     flex: 1;
     border-bottom: 2px dotted rgb(243 235 221 / 0.35);
     transform: translateY(-0.3rem);
   }
 
-  .precio {
+  .menu .precio {
     font-weight: 600;
     font-size: 1.15rem;
     font-variant-numeric: tabular-nums;
   }
 
-  .detalle {
+  .menu .sello {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--mostaza);
+    border: 1.5px solid currentColor;
+    border-radius: 3px;
+    padding: 0.1rem 0.45rem;
+    transform: rotate(-3deg);
+  }
+
+  .menu .agotado .nombre,
+  .menu .agotado .detalle {
+    opacity: 0.55;
+  }
+
+  .menu .detalle {
     display: block;
     font-size: 0.9375rem;
     color: rgb(243 235 221 / 0.68);
   }
 
-  .nota {
-    margin-top: 1.75rem;
-    padding-top: 1rem;
-    border-top: 1px solid rgb(243 235 221 / 0.18);
-    font-size: 0.9375rem;
+  .menu .extra {
+    display: block;
+    font-size: 0.875rem;
     color: var(--mostaza);
   }
 
-  .pedido {
+  .menu .pedido {
     margin-top: 2.25rem;
     padding: 1.5rem;
     background: var(--botella);
@@ -169,27 +174,27 @@ const [cafe, acompanar] = menu;
     justify-items: start;
   }
 
-  .dibujo {
+  .menu .dibujo {
     width: 3.5rem;
     color: var(--mostaza);
   }
 
   @media (min-width: 720px) {
-    .columna {
+    .menu .columna {
       padding: 2.75rem 2.5rem;
     }
   }
 
   @media (min-width: 1024px) {
-    .pizarron {
+    .menu .pizarron {
       grid-template-columns: 1.25fr 1fr;
     }
 
-    .columna {
+    .menu .columna {
       padding: 3rem 3.25rem;
     }
 
-    .secundaria {
+    .menu .secundaria {
       border-top: 0;
       border-left: 1px dashed rgb(243 235 221 / 0.25);
     }

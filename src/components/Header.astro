@@ -1,22 +1,28 @@
 ---
-import BotonWhatsApp from "./BotonWhatsApp.astro";
+import BotonPedir from "./BotonPedir.astro";
+
+interface Props {
+  conBotonPedir?: boolean;
+}
+
+const { conBotonPedir = true } = Astro.props;
 ---
 
 <header class="encabezado">
   <div class="contenedor fila">
-    <a class="marca" href="#inicio">
+    <a class="marca" href="/">
       <span class="marca-pequena">Café</span>
       <span class="marca-grande">La Esquina</span>
     </a>
     <nav aria-label="Secciones">
       <ul>
-        <li><a href="#menu">Menú</a></li>
-        <li><a href="#horario">Horario</a></li>
-        <li><a href="#ubicacion">Dónde estamos</a></li>
+        <li><a href="/#menu">Menú</a></li>
+        <li><a href="/#horario">Horario</a></li>
+        <li><a href="/#ubicacion">Dónde estamos</a></li>
       </ul>
     </nav>
     <div class="accion">
-      <BotonWhatsApp variante="compacto" texto="Pedir" />
+      {conBotonPedir && <BotonPedir variante="compacto" texto="Pedir" />}
     </div>
   </div>
 </header>

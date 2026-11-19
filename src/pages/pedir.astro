@@ -1,0 +1,512 @@
+---
+import Base from "../layouts/Base.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import Iconos from "../components/Iconos.astro";
+import { ShoppingBag } from "@lucide/astro";
+import { negocio } from "../data/negocio";
+---
+
+<Base
+  titulo="Pide para recoger · Café La Esquina"
+  descripcion="Haz tu pedido en línea, elige a qué hora pasas y recógelo en la barra de Colima esquina Córdoba, Roma Norte. Pagas en caja."
+>
+  <Header conBotonPedir={false} />
+  <main class="pagina-pedir">
+    <div class="contenedor">
+      <header class="cabecera">
+        <p class="etiqueta">Para recoger en {negocio.direccion.calle}</p>
+        <h1>Pide aquí y pasa por él</h1>
+        <p class="bajada">
+          Elige lo que quieres, dinos a qué hora llegas y lo tenemos listo en la barra. Pagas en caja al
+          recoger.
+        </p>
+      </header>
+
+      <div class="rejilla">
+        <section class="carta" aria-labelledby="carta-titulo">
+          <h2 id="carta-titulo" class="sr-only">Menú</h2>
+          <div id="carta">
+            <p class="cargando">Cargando el menú…</p>
+          </div>
+        </section>
+
+        <aside id="ticket" class="ticket" aria-labelledby="ticket-titulo">
+          <div class="ticket-papel">
+            <h2 id="ticket-titulo">Tu pedido</h2>
+            <div id="ticket-lineas">
+              <p class="vacio">Todavía no agregas nada. Elige del menú y aquí aparece tu pedido.</p>
+            </div>
+            <div class="total">
+              <span>Total</span>
+              <span id="ticket-total">$0</span>
+            </div>
+
+            <form id="formulario" novalidate>
+              <label class="campo">
+                <span>Tu nombre</span>
+                <input id="nombre" name="nombre" autocomplete="name" maxlength="60" required />
+              </label>
+              <label class="campo">
+                <span>Teléfono a 10 dígitos</span>
+                <input
+                  id="telefono"
+                  name="telefono"
+                  type="tel"
+                  inputmode="numeric"
+                  autocomplete="tel-national"
+                  placeholder="55 1234 5678"
+                  maxlength="16"
+                  required
+                />
+              </label>
+              <label class="campo">
+                <span>¿A qué hora pasas?</span>
+                <select id="hora" name="hora" required>
+                  <option value="">Cargando horas…</option>
+                </select>
+              </label>
+              <p id="aviso-horario" class="aviso" hidden></p>
+              <p class="pago">Pagas en caja al recoger. Solo te llamamos si hay algún problema con tu pedido.</p>
+              <p id="error" class="error" role="alert" hidden></p>
+              <button id="enviar" class="enviar" type="submit" disabled>Agrega algo para continuar</button>
+            </form>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <a id="barra-movil" class="barra-movil" href="#ticket" hidden>
+      <ShoppingBag size={20} aria-hidden="true" />
+      <span id="barra-texto"></span>
+      <span class="barra-ver">Ver mi pedido</span>
+    </a>
+    <p id="anuncio" class="sr-only" aria-live="polite"></p>
+  </main>
+  <Footer />
+  <Iconos />
+</Base>
+
+<script>
+  import "../scripts/pedir";
+</script>
+
+<style is:global>
+  .pagina-pedir {
+    padding-block: 3rem 5rem;
+  }
+
+  .pagina-pedir .cabecera {
+    max-width: 40rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .pagina-pedir .cabecera .etiqueta {
+    color: var(--terracota);
+    margin-bottom: 0.9rem;
+  }
+
+  .pagina-pedir h1 {
+    font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+    letter-spacing: -0.02em;
+  }
+
+  .pagina-pedir .bajada {
+    margin-top: 1rem;
+    color: var(--tostado-suave);
+    font-size: 1.125rem;
+  }
+
+  .pagina-pedir .rejilla {
+    display: grid;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .pagina-pedir .cargando,
+  .pagina-pedir .falla {
+    padding: 2rem 0;
+    color: var(--tostado-suave);
+  }
+
+  .pagina-pedir .falla button {
+    margin-top: 0.75rem;
+  }
+
+  .pagina-pedir .categoria + .categoria {
+    margin-top: 2.75rem;
+  }
+
+  .pagina-pedir .categoria h3 {
+    font-size: 1.75rem;
+    font-style: italic;
+    font-weight: 500;
+    color: var(--terracota);
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--tostado);
+  }
+
+  .pagina-pedir .categoria ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pagina-pedir .producto {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    padding-block: 1rem;
+    border-bottom: 1px dashed rgb(42 28 19 / 0.25);
+  }
+
+  .pagina-pedir .producto .linea {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .pagina-pedir .producto .nombre {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  .pagina-pedir .producto .puntos {
+    flex: 1;
+    border-bottom: 2px dotted rgb(42 28 19 / 0.25);
+    transform: translateY(-0.3rem);
+  }
+
+  .pagina-pedir .producto .precio {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pagina-pedir .producto .detalle {
+    font-size: 0.9375rem;
+    color: var(--tostado-suave);
+  }
+
+  .pagina-pedir .producto.agotado .nombre,
+  .pagina-pedir .producto.agotado .detalle {
+    opacity: 0.5;
+  }
+
+  .pagina-pedir .producto.agotado .precio {
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--terracota);
+  }
+
+  .pagina-pedir .agregar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.55rem 0.9rem;
+    border: 2px solid var(--tostado);
+    border-radius: var(--radio);
+    background: transparent;
+    color: var(--tostado);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    cursor: pointer;
+  }
+
+  .pagina-pedir .agregar:hover,
+  .pagina-pedir .agregar[aria-expanded="true"] {
+    background: var(--tostado);
+    color: var(--papel);
+  }
+
+  .pagina-pedir .opciones {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 1rem;
+    padding: 1.1rem 1.2rem;
+    background: var(--papel-oscuro);
+    border-radius: var(--radio);
+  }
+
+  .pagina-pedir .opciones fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pagina-pedir .opciones legend {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .pagina-pedir .requerido {
+    font-weight: 400;
+    color: var(--terracota);
+  }
+
+  .pagina-pedir .opcion {
+    position: relative;
+  }
+
+  .pagina-pedir .opcion input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    cursor: pointer;
+  }
+
+  .pagina-pedir .opcion span {
+    display: inline-block;
+    padding: 0.45rem 0.85rem;
+    border: 1.5px solid rgb(42 28 19 / 0.35);
+    border-radius: 999px;
+    background: var(--papel);
+    font-size: 0.9375rem;
+  }
+
+  .pagina-pedir .opcion input:checked + span {
+    background: var(--botella);
+    border-color: var(--botella);
+    color: var(--papel);
+  }
+
+  .pagina-pedir .opcion input:focus-visible + span {
+    outline: 3px solid var(--mostaza);
+    outline-offset: 2px;
+  }
+
+  .pagina-pedir .opciones-acciones {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .pagina-pedir .boton-primario,
+  .pagina-pedir .enviar {
+    padding: 0.8rem 1.2rem;
+    border: 0;
+    border-radius: var(--radio);
+    background: var(--terracota);
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 3px 0 var(--terracota-oscura);
+  }
+
+  .pagina-pedir .boton-primario:hover,
+  .pagina-pedir .enviar:hover:not(:disabled) {
+    background: var(--terracota-oscura);
+  }
+
+  .pagina-pedir .boton-texto {
+    border: 0;
+    background: none;
+    font: inherit;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    color: var(--tostado-suave);
+  }
+
+  .pagina-pedir .ticket {
+    scroll-margin-top: 5.5rem;
+  }
+
+  .pagina-pedir .ticket-papel {
+    background: #fffaf1;
+    padding: 1.75rem 1.5rem 2rem;
+    border-radius: 2px;
+    box-shadow: 0 14px 30px -18px rgb(42 28 19 / 0.55);
+    border-top: 6px solid var(--botella);
+  }
+
+  .pagina-pedir .ticket h2 {
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .pagina-pedir .vacio {
+    color: var(--tostado-suave);
+    font-size: 0.9375rem;
+    padding-bottom: 1rem;
+  }
+
+  .pagina-pedir #ticket-lineas ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pagina-pedir .linea-ticket {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.4rem 0.75rem;
+    padding-block: 0.75rem;
+    border-bottom: 1px dashed rgb(42 28 19 / 0.25);
+  }
+
+  .pagina-pedir .linea-nombre {
+    font-weight: 600;
+  }
+
+  .pagina-pedir .linea-opciones {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--tostado-suave);
+  }
+
+  .pagina-pedir .linea-precio {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    text-align: right;
+  }
+
+  .pagina-pedir .cantidad {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    grid-column: 1;
+  }
+
+  .pagina-pedir .cantidad button {
+    display: inline-grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1.5px solid rgb(42 28 19 / 0.35);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--tostado);
+    cursor: pointer;
+  }
+
+  .pagina-pedir .cantidad button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .pagina-pedir .cantidad span {
+    min-width: 1.5ch;
+    text-align: center;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pagina-pedir .total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-block: 1rem 1.5rem;
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .pagina-pedir form {
+    display: grid;
+    gap: 1rem;
+    padding-top: 1.25rem;
+    border-top: 2px solid var(--tostado);
+  }
+
+  .pagina-pedir .campo {
+    display: grid;
+    gap: 0.35rem;
+    font-weight: 500;
+    font-size: 0.9375rem;
+  }
+
+  .pagina-pedir .campo input,
+  .pagina-pedir .campo select {
+    font: inherit;
+    font-size: 1rem;
+    padding: 0.7rem 0.8rem;
+    border: 1.5px solid rgb(42 28 19 / 0.35);
+    border-radius: var(--radio);
+    background: #fff;
+    color: var(--tostado);
+  }
+
+  .pagina-pedir .campo [aria-invalid="true"] {
+    border-color: var(--terracota);
+  }
+
+  .pagina-pedir .pago {
+    font-size: 0.9375rem;
+    color: var(--botella);
+    font-weight: 500;
+  }
+
+  .pagina-pedir .aviso {
+    font-size: 0.9375rem;
+    padding: 0.75rem 0.9rem;
+    background: rgb(217 164 65 / 0.2);
+    border-radius: var(--radio);
+  }
+
+  .pagina-pedir .error {
+    font-size: 0.9375rem;
+    padding: 0.75rem 0.9rem;
+    background: rgb(185 83 44 / 0.12);
+    border-left: 4px solid var(--terracota);
+    color: var(--terracota-oscura);
+  }
+
+  .pagina-pedir .enviar {
+    font-size: 1.0625rem;
+    padding-block: 1rem;
+  }
+
+  .pagina-pedir .enviar:disabled {
+    background: rgb(42 28 19 / 0.25);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .pagina-pedir .barra-movil {
+    position: fixed;
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radio);
+    background: var(--tostado);
+    color: var(--papel);
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: 0 10px 24px rgb(42 28 19 / 0.35);
+  }
+
+  .pagina-pedir .barra-ver {
+    margin-left: auto;
+    color: var(--mostaza);
+  }
+
+  @media (min-width: 900px) {
+    .pagina-pedir .rejilla {
+      grid-template-columns: 1fr 24rem;
+      gap: 3.5rem;
+    }
+
+    .pagina-pedir .ticket {
+      position: sticky;
+      top: 5.5rem;
+    }
+
+    .pagina-pedir .barra-movil {
+      display: none;
+    }
+  }
+</style>

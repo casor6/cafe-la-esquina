@@ -1,0 +1,404 @@
+---
+import Base from "../layouts/Base.astro";
+import Iconos from "../components/Iconos.astro";
+import { BellRing, LogOut } from "@lucide/astro";
+---
+
+<Base titulo="Pedidos · Café La Esquina" descripcion="Panel de pedidos de Café La Esquina." noIndexar>
+  <div class="pagina-panel">
+    <header class="panel-barra">
+      <div class="contenedor fila">
+        <p class="panel-marca">La Esquina <span>pedidos</span></p>
+        <div id="panel-acciones" class="panel-acciones" hidden>
+          <button id="sonido" type="button" class="boton-borde">
+            <BellRing size={18} aria-hidden="true" />
+            <span id="sonido-texto">Activar aviso sonoro</span>
+          </button>
+          <button id="salir" type="button" class="boton-borde">
+            <LogOut size={18} aria-hidden="true" />
+            <span>Salir</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="contenedor panel-cuerpo">
+      <p id="vista-cargando" class="cargando">Cargando…</p>
+
+      <section id="vista-entrar" class="entrar" hidden aria-labelledby="entrar-titulo">
+        <h1 id="entrar-titulo">Entrar al panel</h1>
+        <form id="form-entrar">
+          <label class="campo">
+            <span>Correo</span>
+            <input name="correo" type="email" autocomplete="username" required />
+          </label>
+          <label class="campo">
+            <span>Contraseña</span>
+            <input name="contrasena" type="password" autocomplete="current-password" required />
+          </label>
+          <p id="error-entrar" class="error" role="alert" hidden></p>
+          <button type="submit" class="boton-avanzar">Entrar</button>
+        </form>
+      </section>
+
+      <section id="vista-sin-acceso" class="entrar" hidden>
+        <h1>Sin acceso</h1>
+        <p>Esta cuenta no tiene permiso para ver pedidos. Entra con la cuenta del café.</p>
+        <button id="salir-sin-acceso" type="button" class="boton-avanzar">Cambiar de cuenta</button>
+      </section>
+
+      <section id="vista-tablero" hidden aria-labelledby="tablero-titulo">
+        <div class="tablero-cabeza">
+          <h1 id="tablero-titulo">Pedidos de hoy</h1>
+          <p id="resumen" class="resumen"></p>
+        </div>
+        <p id="aviso-panel" class="error" role="alert" hidden></p>
+        <div id="tablero"></div>
+      </section>
+    </main>
+  </div>
+  <Iconos />
+</Base>
+
+<script>
+  import "../scripts/panel";
+</script>
+
+<style is:global>
+  .pagina-panel {
+    min-height: 100vh;
+    background: var(--papel);
+  }
+
+  .pagina-panel .panel-barra {
+    background: var(--tostado);
+    color: var(--papel);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .pagina-panel .fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 3.75rem;
+  }
+
+  .pagina-panel .panel-marca {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 1.3rem;
+  }
+
+  .pagina-panel .panel-marca span {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--mostaza);
+  }
+
+  .pagina-panel .panel-acciones {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .pagina-panel .boton-borde {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.8rem;
+    border: 1.5px solid rgb(243 235 221 / 0.4);
+    border-radius: var(--radio);
+    background: transparent;
+    color: var(--papel);
+    font: inherit;
+    font-size: 0.9375rem;
+    cursor: pointer;
+  }
+
+  .pagina-panel .boton-borde.activo {
+    border-color: var(--mostaza);
+    color: var(--mostaza);
+  }
+
+  .pagina-panel .panel-cuerpo {
+    padding-block: 2rem 4rem;
+  }
+
+  .pagina-panel .cargando {
+    color: var(--tostado-suave);
+  }
+
+  .pagina-panel .entrar {
+    max-width: 24rem;
+    margin: 3rem auto 0;
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .pagina-panel .entrar h1 {
+    font-size: 2.25rem;
+  }
+
+  .pagina-panel .entrar form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .pagina-panel .campo {
+    display: grid;
+    gap: 0.35rem;
+    font-weight: 500;
+  }
+
+  .pagina-panel .campo input {
+    font: inherit;
+    padding: 0.75rem 0.85rem;
+    border: 1.5px solid rgb(42 28 19 / 0.35);
+    border-radius: var(--radio);
+    background: #fff;
+  }
+
+  .pagina-panel .error {
+    padding: 0.75rem 0.9rem;
+    background: rgb(185 83 44 / 0.12);
+    border-left: 4px solid var(--terracota);
+    color: var(--terracota-oscura);
+  }
+
+  .pagina-panel .boton-avanzar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.85rem 1.2rem;
+    border: 0;
+    border-radius: var(--radio);
+    background: var(--terracota);
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 3px 0 var(--terracota-oscura);
+  }
+
+  .pagina-panel .boton-avanzar:disabled,
+  .pagina-panel .boton-texto:disabled {
+    opacity: 0.5;
+    cursor: wait;
+  }
+
+  .pagina-panel .boton-texto {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 0;
+    background: none;
+    padding: 0.5rem;
+    font: inherit;
+    font-size: 0.9375rem;
+    color: var(--tostado-suave);
+    cursor: pointer;
+  }
+
+  .pagina-panel .tablero-cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .pagina-panel .tablero-cabeza h1 {
+    font-size: 2rem;
+  }
+
+  .pagina-panel .resumen {
+    color: var(--tostado-suave);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pagina-panel .grupo {
+    margin-top: 2rem;
+  }
+
+  .pagina-panel .grupo h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.4rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--tostado);
+  }
+
+  .pagina-panel .conteo {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.8rem;
+    height: 1.8rem;
+    padding-inline: 0.4rem;
+    border-radius: 999px;
+    background: var(--tostado);
+    color: var(--papel);
+    font-family: var(--sans);
+    font-size: 0.875rem;
+  }
+
+  .pagina-panel .grupo-recibido .conteo {
+    background: var(--terracota);
+  }
+
+  .pagina-panel .grupo-listo .conteo {
+    background: var(--botella);
+  }
+
+  .pagina-panel .vacio {
+    padding-block: 1rem;
+    color: var(--tostado-suave);
+  }
+
+  .pagina-panel .lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+
+  .pagina-panel .pedido {
+    background: #fffaf1;
+    padding: 1rem 1.1rem;
+    border-left: 6px solid var(--tostado);
+    box-shadow: 0 6px 16px -12px rgb(42 28 19 / 0.5);
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .pagina-panel .grupo-recibido .pedido {
+    border-left-color: var(--terracota);
+  }
+
+  .pagina-panel .grupo-listo .pedido {
+    border-left-color: var(--botella);
+  }
+
+  .pagina-panel .pedido.nuevo {
+    animation: destello 1.2s ease 2;
+  }
+
+  @keyframes destello {
+    50% {
+      background: rgb(217 164 65 / 0.35);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pagina-panel .pedido.nuevo {
+      animation: none;
+    }
+  }
+
+  .pagina-panel .pedido-cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+  }
+
+  .pagina-panel .folio {
+    font-family: var(--serif);
+    font-size: 1.6rem;
+    font-weight: 700;
+  }
+
+  .pagina-panel .cliente {
+    font-weight: 600;
+    font-size: 1.125rem;
+  }
+
+  .pagina-panel .de-otro-dia {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--terracota);
+  }
+
+  .pagina-panel .recoge {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pagina-panel .recoge small {
+    font-weight: 400;
+    color: var(--tostado-suave);
+  }
+
+  .pagina-panel .recoge.urgente,
+  .pagina-panel .recoge.urgente small {
+    color: var(--terracota-oscura);
+  }
+
+  .pagina-panel .articulos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.2rem;
+    font-size: 1.0625rem;
+  }
+
+  .pagina-panel .articulos .op {
+    color: var(--tostado-suave);
+  }
+
+  .pagina-panel .pedido-pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed rgb(42 28 19 / 0.25);
+  }
+
+  .pagina-panel .tel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-variant-numeric: tabular-nums;
+    text-underline-offset: 3px;
+  }
+
+  .pagina-panel .total {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pagina-panel .acciones {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .pagina-panel .entregados summary {
+    cursor: pointer;
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding-block: 0.5rem;
+  }
+
+  @media (min-width: 1100px) {
+    .pagina-panel .lista {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

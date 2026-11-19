@@ -1,14 +1,3 @@
-export interface Platillo {
-  nombre: string;
-  detalle: string;
-  precio: number;
-}
-
-export interface SeccionMenu {
-  titulo: string;
-  platillos: Platillo[];
-}
-
 export interface Turno {
   abre: string;
   cierra: string;
@@ -46,27 +35,3 @@ export const horario: FilaHorario[] = [
   { dias: "Domingo", indices: [0], turno: { abre: "08:00", cierra: "15:00" } },
 ];
 
-export const menu: SeccionMenu[] = [
-  {
-    titulo: "Café",
-    platillos: [
-      { nombre: "Americano", detalle: "Pluma Hidalgo, Oaxaca", precio: 48 },
-      { nombre: "Espresso", detalle: "Doble, mezcla de la casa", precio: 40 },
-      { nombre: "Cortado", detalle: "Mitad espresso, mitad leche", precio: 50 },
-      { nombre: "Capuchino", detalle: "Coatepec, Veracruz", precio: 58 },
-      { nombre: "Café de olla", detalle: "Canela y piloncillo", precio: 48 },
-      { nombre: "Cold brew", detalle: "Reposado 18 horas", precio: 62 },
-    ],
-  },
-  {
-    titulo: "Para acompañar",
-    platillos: [
-      { nombre: "Concha de nata", detalle: "De la panadería de al lado", precio: 35 },
-      { nombre: "Pan de elote", detalle: "Rebanada gruesa, tibia", precio: 42 },
-      { nombre: "Molletes", detalle: "Frijol, queso y pico de gallo", precio: 85 },
-      { nombre: "Chilaquiles verdes", detalle: "Con huevo o pollo", precio: 110 },
-    ],
-  },
-];
-
-export const extraLeche = 10;
