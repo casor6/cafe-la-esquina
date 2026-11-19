@@ -64,6 +64,10 @@ svg {
   display: block;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 :focus-visible {
   outline: 3px solid var(--mostaza);
   outline-offset: 3px;

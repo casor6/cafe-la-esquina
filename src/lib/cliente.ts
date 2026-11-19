@@ -60,6 +60,10 @@ export function hora(iso: string): string {
   return formatoHora.format(new Date(iso));
 }
 
+export function cerrarOracion(texto: string): string {
+  return texto.endsWith(".") ? texto : `${texto}.`;
+}
+
 export function nodo<K extends keyof HTMLElementTagNameMap>(
   etiqueta: K,
   clase?: string,

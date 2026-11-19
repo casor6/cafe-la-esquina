@@ -134,14 +134,14 @@ const categorias = await obtenerMenuEnBuild();
               <span>Pedido recibido</span>
             </p>
             <h2 tabindex="-1">Folio <span data-folio></span></h2>
-            <p class="confirmado-hora">Pasa por él a las <strong data-hora></strong>.</p>
+            <p class="confirmado-hora">Pasa por él a las <strong data-hora></strong><span data-punto-hora></span></p>
             <ul class="resumen"></ul>
             <div class="total">
               <span>Total a pagar en caja</span>
               <strong data-total-final></strong>
             </div>
             <p class="confirmado-nota">
-              Di tu nombre o tu folio en la barra. Si algo cambia, llámanos al
+              Di tu nombre o tu folio en la barra. Si algo cambia, llámanos al{" "}
               <a href={`tel:${negocio.telefonoTel}`}>{negocio.telefonoVisible}</a>.
             </p>
             <button type="button" class="otro">Hacer otro pedido</button>
@@ -180,7 +180,7 @@ const categorias = await obtenerMenuEnBuild();
 
 <script>
   import { pesos, type PedidoCreado } from "../lib/api";
-  import { hora, llamarApi, nodo } from "../lib/cliente";
+  import { cerrarOracion, hora, llamarApi, nodo } from "../lib/cliente";
 
   interface Linea {
     clave: string;
@@ -356,7 +356,9 @@ const categorias = await obtenerMenuEnBuild();
 
   function mostrarConfirmacion(pedido: PedidoCreado): void {
     $<HTMLElement>("[data-folio]").textContent = `#${pedido.folio}`;
-    $<HTMLElement>("[data-hora]").textContent = hora(pedido.horaRecogida);
+    const horaTexto = hora(pedido.horaRecogida);
+    $<HTMLElement>("[data-hora]").textContent = horaTexto;
+    $<HTMLElement>("[data-punto-hora]").textContent = cerrarOracion(horaTexto).slice(horaTexto.length);
     $<HTMLElement>("[data-total-final]").textContent = pesos(pedido.totalCentavos);
     $<HTMLUListElement>(".resumen").replaceChildren(
       ...pedido.items.map((item) => {

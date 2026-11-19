@@ -40,3 +40,11 @@ Aplica a todo backend que construyas, en cualquier lenguaje, framework o base de
 
 ### Al terminar
 - Revisa el backend contra esta lista y dime qué cumple, qué falta y por qué.
+
+## Antes de decir que terminaste
+
+- Pasar el build y las pruebas no basta: abre cada pantalla en un navegador real (Playwright o el que tengas) y toma capturas.
+- Revisa cada estado: sin sesión, con sesión, vacío, con datos, con error y en celular.
+- Lo que debe estar oculto no se ve. Si usas el atributo `hidden`, que ningún `display` de tu CSS le gane.
+- Lee los textos de las capturas: puntuación doble, espacios que faltan, palabras cortadas.
+- Mira las capturas tú mismo y corrige antes de entregarme. Dime qué revisaste.

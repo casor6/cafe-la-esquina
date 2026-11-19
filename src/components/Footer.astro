@@ -15,8 +15,7 @@ const anio = new Date().getFullYear();
       <p class="marca">{negocio.nombre}</p>
       <p>{negocio.direccion.calle}, {negocio.direccion.colonia}</p>
       <p>
-        <a href={`tel:${negocio.telefonoTel}`}>{negocio.telefonoVisible}</a>
-        · {negocio.instagram}
+        <a href={`tel:${negocio.telefonoTel}`}>{negocio.telefonoVisible}</a>{" "}· {negocio.instagram}
       </p>
       <p class="legal">© {anio} {negocio.nombre}. Ciudad de México.</p>
     </div>

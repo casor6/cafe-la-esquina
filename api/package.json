@@ -26,7 +26,8 @@
     "db:seed": "prisma db seed",
     "db:test:migrar": "ENV_FILE=.env.test prisma migrate deploy",
     "crear-admin": "tsx scripts/crear-admin.ts",
-    "pretest:e2e": "npm run db:test:migrar"
+    "pretest:e2e": "npm run db:test:migrar",
+    "start:prueba": "ENV_FILE=.env.test node dist/main.js"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

@@ -99,7 +99,7 @@ import Base from "../layouts/Base.astro";
 
 <script>
   import { pesos, type EstadoPedido, type PedidoAdmin } from "../lib/api";
-  import { hora, llamarApi, nodo } from "../lib/cliente";
+  import { cerrarOracion, hora, llamarApi, nodo } from "../lib/cliente";
 
   const INTERVALO_MS = 20_000;
   const SIGUIENTE: Record<EstadoPedido, string | null> = {
@@ -223,7 +223,7 @@ import Base from "../layouts/Base.astro";
     const pendientes = pedidos.filter((p) => p.estado !== "ENTREGADO").length;
     document.title = pendientes > 0 ? `(${pendientes}) Pedidos · Café La Esquina` : "Pedidos · Café La Esquina";
     estadoCarga.classList.remove("con-error");
-    estadoCarga.textContent = `Actualizado a las ${hora(new Date().toISOString())}. Se refresca solo cada 20 segundos.`;
+    estadoCarga.textContent = `${cerrarOracion(`Actualizado a las ${hora(new Date().toISOString())}`)} Se refresca solo cada 20 segundos.`;
   }
 
   async function avanzar(pedido: PedidoAdmin, boton: HTMLButtonElement, li: HTMLElement): Promise<void> {
@@ -635,6 +635,21 @@ import Base from "../layouts/Base.astro";
 
   .entregados summary {
     cursor: pointer;
+  }
+
+  @media (max-width: 599px) {
+    .boton-icono {
+      padding: 0.5rem 0.6rem;
+    }
+
+    .boton-icono span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
   }
 
   @media (min-width: 900px) {
